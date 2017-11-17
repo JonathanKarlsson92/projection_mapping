@@ -9,8 +9,8 @@
 //#include <iiwa_msgs/JointPosition.h>
 //#include <iiwa_msgs/SmartServoMode.h>
 //#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
-//#include <ar_track_alvar_msgs/AlvarMarkers.h>
-//#include <tf/transform_listener.h>
+#include <ar_track_alvar_msgs/AlvarMarkers.h>
+#include <tf/transform_listener.h>
 //#include <iiwa_msgs/JointTorque.h>
 
 

@@ -1,5 +1,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include <tf/transform_listener.h>
+#include <ar_track_alvar_msgs/AlvarMarkers.h>
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
@@ -26,15 +28,16 @@ double transform::sampleMethod()
 {
 	return 0;
 }
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
+void chatterCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&)
 {
-  ROS_INFO("I heard: [%s]", msg->data.c_str());
+  //ROS_INFO("ID: [%i]", ar_pose_marker.id.c_str());
 }
 int main(int argc, char **argv)
 {
+  ar_track_alvar_msgs::AlvarMarkers msg; 
   ros::init(argc, argv, "mapping_node");
   ros::NodeHandle n;
-  ros::Subscriber ar_pose = n.subscribe("tf", 1000, chatterCallback);
+  ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, chatterCallback);
   ros::spin();
 
   return 0;

@@ -36,15 +36,15 @@ install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 ##Added files start
-add_executable(transformation src/transformation.cpp)
+add_executable(publisher src/transformation.cpp)
 add_executable(subscriber src/subscriber.cpp)
 add_executable(combinedTest src/combinedTest.cpp)
 
-target_link_libraries(transformation ${catkin_LIBRARIES})
+target_link_libraries(publisher ${catkin_LIBRARIES})
 target_link_libraries(subscriber ${catkin_LIBRARIES})
 target_link_libraries(combinedTest ${catkin_LIBRARIES})
 
-add_dependencies(transformation dep_cpp)
+add_dependencies(publisher dep_cpp)
 add_dependencies(subscriber dep_cpp)
 add_dependencies(combinedTest dep_cpp)
 ##added files end

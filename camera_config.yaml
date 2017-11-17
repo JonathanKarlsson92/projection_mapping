@@ -1,0 +1,20 @@
+image_width: 640
+image_height: 480
+camera_name: kinect_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [529.103921, 0.000000, 322.949778, 0.000000, 529.067099, 253.779240, 0.000000, 0.000000, 1.000000]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.181137, -0.323465, -0.000091, 0.000382, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 1.000000]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [540.828491, 0.000000, 322.756498, 0.000000, 0.000000, 541.391479, 253.218785, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]

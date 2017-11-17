@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(believe_in_me)
+project(projection_mapping)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -36,17 +36,20 @@ install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 ##Added files start
-add_executable(publisher src/transformation.cpp)
+add_executable(publisher src/publisher.cpp)
 add_executable(subscriber src/subscriber.cpp)
 add_executable(combinedTest src/combinedTest.cpp)
+add_executable(transformation src/transformation.cpp)
 
 target_link_libraries(publisher ${catkin_LIBRARIES})
 target_link_libraries(subscriber ${catkin_LIBRARIES})
 target_link_libraries(combinedTest ${catkin_LIBRARIES})
+target_link_libraries(transformation ${catkin_LIBRARIES})
 
 add_dependencies(publisher dep_cpp)
 add_dependencies(subscriber dep_cpp)
 add_dependencies(combinedTest dep_cpp)
+add_dependencies(transformation dep_cpp)
 ##added files end
 
 ## System dependencies are found with CMake's conventions

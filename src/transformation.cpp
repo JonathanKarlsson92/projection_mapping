@@ -32,9 +32,9 @@ void chatterCallback(const std_msgs::String::ConstPtr& msg)
 }
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "subscriber");
+  ros::init(argc, argv, "mapping_node");
   ros::NodeHandle n;
-  ros::Subscriber ar_pose = n.subscribe("ar_pos_marker", 1000, chatterCallback);
+  ros::Subscriber ar_pose = n.subscribe("tf", 1000, chatterCallback);
   ros::spin();
 
   return 0;

@@ -28,17 +28,30 @@ double transform::sampleMethod()
 {
 	return 0;
 }
-void chatterCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&)
+void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 {
-  //ROS_INFO("ID: [%i]", ar_pose_marker.id.c_str());
+	if(!msg->markers.empty()){
+		ROS_INFO("position_x: [%f]", msg->markers[0].pose.pose.position.x); //Dist from camera
+		//ROS_INFO("position_y: [%f]", msg->markers[0].pose.pose.position.y); //??
+		//ROS_INFO("position_z: [%f]", msg->markers[0].pose.pose.position.z); //??
+
+		ROS_INFO("orientation_x: [%f]", msg->markers[0].pose.pose.orientation.x);
+		//ROS_INFO("orientation_y: [%f]", msg->markers[0].pose.pose.orientation.y);
+		//ROS_INFO("orientation_z: [%f]", msg->markers[0].pose.pose.orientation.z);
+	}
 }
 int main(int argc, char **argv)
 {
-  ar_track_alvar_msgs::AlvarMarkers msg; 
   ros::init(argc, argv, "mapping_node");
   ros::NodeHandle n;
-  ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, chatterCallback);
+  ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, poseCallback);
   ros::spin();
 
   return 0;
 }
+
+///Todo
+// initialize pose to avoid huge values
+// subscribe to relative projector pose
+// enable tracking of multiple cubes
+// 

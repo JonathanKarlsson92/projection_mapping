@@ -19,9 +19,10 @@
 	<!-- Launch the depth registrered camera node, -->
 
 	<!-- Connect the kinect camera to the world frame -->
-	<!--node pkg="tf" type="static_transform_publisher" name="world_to_camera_link" args="-0.62 -0.15 0.39 0.872665 0.0 0.0 /world /camera_link 100"/-->
 	<node pkg="tf" type="static_transform_publisher" name="world_to_camera_link" args="-0.66 -0.125 0.37 0.872665 0.0 0.0 /world /camera_link 100"/>
 
+        <!-- the transformation node -->
+	<node pkg="projection_mapping" type="transformation" name="mapping_node" output="screen"/>
 	
 
 </launch>

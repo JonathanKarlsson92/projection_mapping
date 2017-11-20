@@ -32,8 +32,8 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 {
 	if(!msg->markers.empty()){
 		ROS_INFO("position_x: [%f]", msg->markers[0].pose.pose.position.x); //Dist from camera
-		//ROS_INFO("position_y: [%f]", msg->markers[0].pose.pose.position.y); //??
-		//ROS_INFO("position_z: [%f]", msg->markers[0].pose.pose.position.z); //??
+		ROS_INFO("position_y: [%f]", msg->markers[0].pose.pose.position.y); //??
+		ROS_INFO("position_z: [%f]", msg->markers[0].pose.pose.position.z); //??
 
 		ROS_INFO("orientation_x: [%f]", msg->markers[0].pose.pose.orientation.x);
 		//ROS_INFO("orientation_y: [%f]", msg->markers[0].pose.pose.orientation.y);

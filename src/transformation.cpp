@@ -10,20 +10,17 @@
 class transform{
 	public:
 		transform(ros::NodeHandle&); //  n
-		
+		int markerID;
 	private:
 		double sampleMethod(); //declaration of a private example method
 		float ar_pos_x,ar_pos_y,ar_pos_z;
-		
+		void lookUp();
 		
 
 	
 };
 //Initialization for subscribers,publishers, variables and constants
 transform::transform(ros::NodeHandle& n){
-	ar_pos_x=0;
-	ar_pos_y=0;
-	ar_pos_z=0;
 
 }
 //Sample method
@@ -33,15 +30,25 @@ transform::transform(ros::NodeHandle& n){
 	//list.Add(new Vector3(1,1,1));
 	//return list;
 //}
+void lookUp()
+{
+     
+}
 void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 {
-	const float AR_WIDTH =0.055;
-	if(!msg->markers.empty()){
-		tf::Vector3 position(msg->markers[0].pose.pose.position.x, msg->markers[0].pose.pose.position.y, msg->markers[0].pose.pose.position.z);
-		tf::Quaternion quaternion(msg->markers[0].pose.pose.orientation.x,
-		msg->markers[0].pose.pose.orientation.y,
-		msg->markers[0].pose.pose.orientation.z,
-		msg->markers[0].pose.pose.orientation.w);
+	//std::list<int>
+	const float AR_WIDTH =0.055; //size of ar-cube
+	int nrOfCubes=msg->markers.size(); //number of found cubes (-1?)
+	//if(!msg->markers.empty()){
+	for(int i=0; i<nrOfCubes;i++) //repeat the same number as cubes
+	{
+		int markerID=msg->markers[i].id; // id of detected marker i
+		//get the position and orientation of cube nr [i]
+		tf::Vector3 position(msg->markers[i].pose.pose.position.x, msg->markers[i].pose.pose.position.y, msg->markers[i].pose.pose.position.z);
+		tf::Quaternion quaternion(msg->markers[i].pose.pose.orientation.x,
+		msg->markers[i].pose.pose.orientation.y,
+		msg->markers[i].pose.pose.orientation.z,
+		msg->markers[i].pose.pose.orientation.w);
 		
 		//Creating the 4 corners of a box
 		//quatRotate rotates the vector according to the quaternion
@@ -69,10 +76,7 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		ROS_INFO("ptopleftz: [%f]", pTopLeft.z());
 	}
 }
-void lookUp()
-{
-     
-}
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "mapping_node");
@@ -92,7 +96,7 @@ int main(int argc, char **argv)
 		listener.lookupTransform("/world", "/ar_marker_6",  ros::Time(0), world_to_ar_marker_6);
 		marker_pos_world=world_to_ar_marker_6.getOrigin(); //x position of relative to world frame
 		marker_orient_world=world_to_ar_marker_6.getRotation();
-
+		lookUp();
 		//ROS_INFO("position_x in world frame: [%f]", marker_pos_world.x());	//Why does this not work??
 		//ROS_INFO("position_y in world frame: [%f]", marker_pos_world.getY());
 		//ROS_INFO("position_z in world frame: [%f]", marker_pos_world.getZ());

@@ -175,7 +175,7 @@ int main(int argc, char **argv)
 	ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, poseCallback); //subscribing to position and orientation from Alvar
 	//poseCallback may only be called 1 time since 
 	//possible fix
-	
+	//poseCallback(ar_pose)
 	
 	ros::Publisher ar_projection_pub = n.advertise<std_msgs::String>("ar_projection", 1000);	//projected points
 	ros::Rate loop_rate(10);

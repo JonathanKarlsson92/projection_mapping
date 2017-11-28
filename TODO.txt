@@ -1,0 +1,20 @@
+------------------TODO------------------
+
+
+28/11 Jonathan
+---------------
+*Create a message type type send 4 points and AR_ID
+
+*recieve new message type in websocket
+
+*Spin or a loop in transformation main
+
+*Connect Websocket with openframework
+
+*get openframework to work
+
+*Clean up transformation.cpp
+
+*Clean up proj_mapp_bridge.html
+
+*Remove temporary and unused files in repo

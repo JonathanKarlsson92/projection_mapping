@@ -1,0 +1,2 @@
+int X
+int Y

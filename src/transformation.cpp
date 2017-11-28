@@ -111,6 +111,7 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 
 		//Convert a point to 2D(for projector) test
 		tf::Vector3 marker_2D_p1 = from3dTo2d(marker_pos_proj);
+		
 	}
 	catch (tf::TransformException ex)
 	{
@@ -172,17 +173,25 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "mapping_node");
 	ros::NodeHandle n;
 	ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, poseCallback); //subscribing to position and orientation from Alvar
-
-	//Vector2 points= {1,1}; //hard-coded for communication testing(publish)
-	std_msgs::String points;
-	std::stringstream ss;
-	ss<<"1";
-        points.data = ss.str();
+	//poseCallback may only be called 1 time since 
+	//possible fix
+	
+	
+	ros::Publisher ar_projection_pub = n.advertise<std_msgs::String>("ar_projection", 1000);	//projected points
 	ros::Rate loop_rate(10);
-	ros::Publisher mapped_points_pub = n.advertise<std_msgs::String>("2d_corners", 1000);
-	mapped_points_pub.publish(points);
-
-	ros::spin();
+	
+	while (ros::ok())
+  	{
+		std_msgs::String ar_msg;
+		std::stringstream ss;
+		ss << "1";
+		ar_msg.data = ss.str();
+		ar_projection_pub.publish(ar_msg);
+		ROS_INFO("%s", ar_msg.data.c_str());
+ 
+		loop_rate.sleep();
+	}
+	//ros::spin();
 
 	return 0;
 }

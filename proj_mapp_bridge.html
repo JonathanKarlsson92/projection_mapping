@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1"> 
+<!--
+The next two lines bring in the JavaScript files that support rosbridge integration.
+-->
+<!--<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script> -->
+<script src="roslibjs/build/roslib.js"></script>
+<script src="test.js"></script>
+<script type="text/javascript" type="text/javascript">
+// This function connects to the rosbridge server running on the local computer on port 9090
+var rbServer = new ROSLIB.Ros({
+    url : 'ws://localhost:9090'
+ });
+
+ // This function is called upon the rosbridge connection event
+ rbServer.on('connection', function() {
+     // Write appropriate message to #feedback div when successfully connected to rosbridge
+     var fbDiv = document.getElementById('feedback');
+     fbDiv.innerHTML += "<p>Connected to websocket server.</p>";
+ });
+
+// This function is called when there is an error attempting to connect to rosbridge
+rbServer.on('error', function(error) {
+    // Write appropriate message to #feedback div upon error when attempting to connect to rosbridge
+    var fbDiv = document.getElementById('feedback');
+    fbDiv.innerHTML += "<p>Error connecting to websocket server.</p>";
+});
+
+// This function is called when the connection to rosbridge is closed
+rbServer.on('close', function() {
+    // Write appropriate message to #feedback div upon closing connection to rosbridge
+    var fbDiv = document.getElementById('feedback');
+    fbDiv.innerHTML += "<p>Connection to websocket server closed.</p>";
+ });
+
+// These lines create a topic object as defined by roslibjs
+var AAR_points = new ROSLIB.Topic({
+    ros : rbServer,
+    name : '/AAR_point',
+    messageType : 'geometry_msgs'
+});
+
+// Initializes 2d points to zero
+var AR_points = new ROSLIB.Message({
+    TL : {
+        x : 0.0,
+        y : 0.0
+    },
+    TR : {
+        x : 0.0,
+        y : 0.0
+    },
+BR : {
+        x : 0.0,
+        y : 0.0
+    },
+BL : {
+        x : 0.0,
+        y : 0.0
+    }
+});
+
+/* This function:
+ - retrieves numeric values from the text boxes
+ - assigns these values to the appropriate values in the twist message
+ - publishes the message to the cmd_vel topic.
+ */
+function pubMessage() {
+    /**
+    Set the appropriate values on the twist message object according to values in text boxes
+    It seems that turtlesim only uses the x property of the linear object 
+    and the z property of the angular object
+    **/
+
+    // get values from text input fields. Note for simplicity we are not validating.
+    // Set the appropriate values on the message object
+    AR_points.TL.x = 0 + Number(document.getElementById('p1X_area').value);
+    AR_points.TL.y = 0 + Number(document.getElementById('p1Y_area').value);
+
+    AR_points.TL.x = 0 + Number(document.getElementById('p2X_area').value);
+    AR_points.TL.y = 0 + Number(document.getElementById('p2Y_area').value);
+
+    AR_points.TL.x = 0 + Number(document.getElementById('p3X_area').value);
+    AR_points.TL.y = 0 + Number(document.getElementById('p3Y_area').value);
+
+    AR_points.TL.x = 0 + Number(document.getElementById('p4X_area').value);
+    AR_points.TL.y = 0 + Number(document.getElementById('p4Y_area').value);
+
+    // Publish the message 
+    AAR_points.publish(AR_points);
+}
+
+function clearMessage() {
+
+    document.getElementById('p1X_area').value=0;
+    document.getElementById('p1Y_area').value=0;
+
+    document.getElementById('p2X_area').value=0;
+    document.getElementById('p2Y_area').value=0;
+
+    document.getElementById('p3X_area').value=0;
+    document.getElementById('p3Y_area').value=0;
+
+    document.getElementById('p4X_area').value=0;
+    document.getElementById('p4Y_area').value=0;
+    
+    AR_points.TL.x = 0 ;
+    AR_points.TL.y = 0 ;
+
+    AR_points.TL.x = 0 ;
+    AR_points.TL.y = 0;
+
+    AR_points.TL.x = 0 ;
+    AR_points.TL.y = 0 ;
+
+    AR_points.TL.x = 0 ;
+    AR_points.TL.y = 0 ;
+}
+</script>
+</head>
+
+<body>
+<form name="ctrlPanel">
+<p>Enter positive or negative numeric decimal values in the boxes below</p>
+<table>
+ <tr><td>P1_X</td><td><input id="p1X_area" name="p1X" type="text" value="0"/></td></tr>
+ <tr><td>P1_Y</td><td><input id="p1Y_area" name="P1Y" type="text" value="0"/></td></tr>
+ <tr><td>P2_X</td><td><input id="p2X_area" name="p2X" type="text" value="0"/></td></tr>
+ <tr><td>P2_Y</td><td><input id="p2Y_area" name="P2Y" type="text" value="0"/></td></tr>
+ <tr><td>P3_X</td><td><input id="p3X_area" name="p3X" type="text" value="0"/></td></tr>
+ <tr><td>P3_Y</td><td><input id="p3Y_area" name="P3Y" type="text" value="0"/></td></tr>
+ <tr><td>P4_X</td><td><input id="p4X_area" name="p4X" type="text" value="0"/></td></tr>
+ <tr><td>P4_Y</td><td><input id="p4Y_area" name="p4Y" type="text" value="0"/></td></tr>
+</table>
+<button id="sendMsg" type="button" onclick="pubMessage()">Publish point</button>
+<button id="clearMsg" type="button" onclick="clearMessage()">Clear points</button>
+</form>
+<div id="feedback"></div>
+</body>
+</html>

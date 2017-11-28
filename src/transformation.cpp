@@ -2,8 +2,13 @@
 #include "std_msgs/String.h"
 #include <tf/transform_listener.h>
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
-//#include <Vector3.h>
-
+#include <geometry_msgs/Twist.h> 
+#include <math.h> 
+//#include <Vector2.h>
+#define view_angle_x 3.14/2
+#define view_angle_y 3.14/3
+#define resolution_x 1024
+#define resolution_y 720
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
@@ -11,10 +16,19 @@ class transform{
 	public:
 		transform(ros::NodeHandle&); //  n
 		int markerID;
+		
+		//Parameters for projector
+		//const static float view_angle_x=3.14/2;
+		//const static float view_angle_y=3.14/3;
+		//const static float resolution_x=1024;
+		//const static float resolution_y=720;
+
+		//parameter for artificial projection plane
+		//float distance_z=1;
 	private:
 		double sampleMethod(); //declaration of a private example method
 		float ar_pos_x,ar_pos_y,ar_pos_z;
-		void lookUp();
+		//void lookUp();
 		
 
 	
@@ -30,10 +44,22 @@ transform::transform(ros::NodeHandle& n){
 	//list.Add(new Vector3(1,1,1));
 	//return list;
 //}
-void lookUp()
+tf::Vector3 from3dTo2d(tf::Vector3 corner)
 {
-     
+	tf::Vector3 Point2d;
+
+	//position in x
+	float proj_const_x=resolution_x/std::tan(view_angle_x);		
+	Point2d.setX(proj_const_x*corner.x()/corner.z());
+
+	//position in y
+	float proj_const_y=resolution_y/std::tan(view_angle_y);		
+	Point2d.setY(proj_const_y*corner.y()/corner.z());
+
+	return Point2d; //currently 3d but nothing stored in z
 }
+
+
 // callback method for what to do with every message recieved
 void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 {
@@ -45,7 +71,8 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 	// assuming camera is on projector
 	//tf::Vector3 camera_to_projector_vector(0,0,0.2); //estimated difference in height
 	//tf::Quaternion camera_to_projector_quaternion(tf::Quaternion(0, 0, 0)); //Same orientation x y z?
-	// Listener
+	
+	// Begin Listener
 	//tf::Vector3 marker_pos_world;
 	//tf::Quaternion marker_orient_world;
 	
@@ -54,7 +81,7 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 	tf::Quaternion marker_orient_proj;
 
 	tf::TransformListener listener;
-	lookUp();
+	
 	tf::StampedTransform world_to_ar_marker_6; //pose relative to world
 	tf::StampedTransform projector_to_ar_marker_6; //pose relative to world
 	try
@@ -73,7 +100,6 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		marker_pos_proj=projector_to_ar_marker_6.getOrigin(); //x position of relative to projector
 		marker_orient_proj=projector_to_ar_marker_6.getRotation();
 		
-		lookUp();
 		//ROS_INFO("position_x in world frame: [%f]", marker_pos_world.x());	//Why does this not work??
 		//ROS_INFO("position_y in world frame: [%f]", marker_pos_world.getY());
 		//ROS_INFO("position_z in world frame: [%f]", marker_pos_world.getZ());
@@ -82,6 +108,9 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		ROS_INFO("position_x in world frame: [%f]", marker_pos_proj.x());	//Why does this not work??
 		ROS_INFO("position_y in world frame: [%f]", marker_pos_proj.y());
 		ROS_INFO("position_z in world frame: [%f]", marker_pos_proj.z());
+
+		//Convert a point to 2D(for projector) test
+		tf::Vector3 marker_2D_p1 = from3dTo2d(marker_pos_proj);
 	}
 	catch (tf::TransformException ex)
 	{
@@ -90,6 +119,7 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 	}
 
 	// end listener
+	
 	if(!msg->markers.empty()){
 		//for(int i=0; i<nrOfCubes;i++) //repeat the same number as cubes
 		for(int i=0; i<nrOfCubes;i++) //repeat the same number as cubes
@@ -142,6 +172,15 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "mapping_node");
 	ros::NodeHandle n;
 	ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, poseCallback); //subscribing to position and orientation from Alvar
+
+	//Vector2 points= {1,1}; //hard-coded for communication testing(publish)
+	std_msgs::String points;
+	std::stringstream ss;
+	ss<<"1";
+        points.data = ss.str();
+	ros::Rate loop_rate(10);
+	ros::Publisher mapped_points_pub = n.advertise<std_msgs::String>("2d_corners", 1000);
+	mapped_points_pub.publish(points);
 
 	ros::spin();
 

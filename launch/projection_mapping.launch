@@ -13,6 +13,8 @@
 	<arg name="cam_image_topic" default="/camera/depth_registered/points" />
 
 	<include file="$(find freenect_launch)/launch/examples/freenect-registered-xyzrgb.launch"/>
+	<!-- Open server -->
+	<!-- <include file="$(find project_mapping)/proj_mapp_bridge.html"/> -->
 
 	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkers" respawn="false" output="log" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame) $(arg max_frequency) $(arg marker_resolution) " />
 	<remap from="rosout" to="not_rosout"/>
@@ -23,6 +25,8 @@
 
         <!-- the transformation node -->
 	<node pkg="projection_mapping" type="transformation" name="mapping_node" output="screen"/>
+
+	
 	
 
 </launch>

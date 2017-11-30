@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 	ros::Publisher ar_projection_pub = n.advertise<std_msgs::String>("ar_projection", 1000);	//projected points
 	ros::Rate loop_rate(10);
 	
-	int count=0;
+	int count=50;
 	while (ros::ok())
   	{
 		std_msgs::String ar_msg;
@@ -190,8 +190,11 @@ int main(int argc, char **argv)
 		ar_msg.data = ss.str();
 		ar_projection_pub.publish(ar_msg);
 		ROS_INFO("%s", ar_msg.data.c_str());
- 
+ 		if(count>20){
+			count=1;
+		}
 		loop_rate.sleep();
+
 	}
 	//ros::spin();
 

@@ -37,32 +37,7 @@ rbServer.on('close', function() {
     fbDiv.innerHTML += "<p>Connection to websocket server closed.</p>";
  });
 
-// These lines create a topic object as defined by roslibjs
-var AAR_points = new ROSLIB.Topic({
-    ros : rbServer,
-    name : '/AAR_point',
-    messageType : 'geometry_msgs'
-});
-
-// Initializes 2d points to zero
-var AR_points = new ROSLIB.Message({
-    TL : {
-        x : 0.0,
-        y : 0.0
-    },
-    TR : {
-        x : 0.0,
-        y : 0.0
-    },
-BR : {
-        x : 0.0,
-        y : 0.0
-    },
-BL : {
-        x : 0.0,
-        y : 0.0
-    }
-});
+var p=0;
 
 var listener = new ROSLIB.Topic({
 		ros : rbServer,
@@ -72,88 +47,94 @@ var listener = new ROSLIB.Topic({
 
 listener.subscribe(function(message) {
 	console.log('Received message on ' + listener.name + ': ' + message.data);
-	//listener.unsubscribe();
+	p=message.data;
 });
 
-/* This function:
- - retrieves numeric values from the text boxes
- - assigns these values to the appropriate values in the twist message
- - publishes the message to the cmd_vel topic.
- */
-function pubMessage() {
-    /**
-    Set the appropriate values on the twist message object according to values in text boxes
-    It seems that turtlesim only uses the x property of the linear object 
-    and the z property of the angular object
-    **/
 
-    // get values from text input fields. Note for simplicity we are not validating.
-    // Set the appropriate values on the message object
-    AR_points.TL.x = 0 + Number(document.getElementById('p1X_area').value);
-    AR_points.TL.y = 0 + Number(document.getElementById('p1Y_area').value);
-
-    AR_points.TL.x = 0 + Number(document.getElementById('p2X_area').value);
-    AR_points.TL.y = 0 + Number(document.getElementById('p2Y_area').value);
-
-    AR_points.TL.x = 0 + Number(document.getElementById('p3X_area').value);
-    AR_points.TL.y = 0 + Number(document.getElementById('p3Y_area').value);
-
-    AR_points.TL.x = 0 + Number(document.getElementById('p4X_area').value);
-    AR_points.TL.y = 0 + Number(document.getElementById('p4Y_area').value);
-
-    // Publish the message 
-    AAR_points.publish(AR_points);
-}
-
-function readMessage() {
-	
-}
-
-function clearMessage() {
-
-    document.getElementById('p1X_area').value=0;
-    document.getElementById('p1Y_area').value=0;
-
-    document.getElementById('p2X_area').value=0;
-    document.getElementById('p2Y_area').value=0;
-
-    document.getElementById('p3X_area').value=0;
-    document.getElementById('p3Y_area').value=0;
-
-    document.getElementById('p4X_area').value=0;
-    document.getElementById('p4Y_area').value=0;
-    
-    AR_points.TL.x = 0 ;
-    AR_points.TL.y = 0 ;
-
-    AR_points.TL.x = 0 ;
-    AR_points.TL.y = 0;
-
-    AR_points.TL.x = 0 ;
-    AR_points.TL.y = 0 ;
-
-    AR_points.TL.x = 0 ;
-    AR_points.TL.y = 0 ;
-}
 </script>
 </head>
 
-<body>
-<form name="ctrlPanel">
-<p>Enter positive or negative numeric decimal values in the boxes below</p>
-<table>
- <tr><td>P1_X</td><td><input id="p1X_area" name="p1X" type="text" value="0"/></td></tr>
- <tr><td>P1_Y</td><td><input id="p1Y_area" name="P1Y" type="text" value="0"/></td></tr>
- <tr><td>P2_X</td><td><input id="p2X_area" name="p2X" type="text" value="0"/></td></tr>
- <tr><td>P2_Y</td><td><input id="p2Y_area" name="P2Y" type="text" value="0"/></td></tr>
- <tr><td>P3_X</td><td><input id="p3X_area" name="p3X" type="text" value="0"/></td></tr>
- <tr><td>P3_Y</td><td><input id="p3Y_area" name="P3Y" type="text" value="0"/></td></tr>
- <tr><td>P4_X</td><td><input id="p4X_area" name="p4X" type="text" value="0"/></td></tr>
- <tr><td>P4_Y</td><td><input id="p4Y_area" name="p4Y" type="text" value="0"/></td></tr>
-</table>
-<button id="sendMsg" type="button" onclick="pubMessage()">Publish point</button>
-<button id="clearMsg" type="button" onclick="clearMessage()">Clear points</button>
-</form>
-<div id="feedback"></div>
+<body bgcolor="black">
+<div id="feedback"></div> <!--  <---Something important for updating -->
+<canvas id="canvas" ></canvas>
+    <script>
+	//make a black background
+        var can = document.getElementById('canvas');
+	var ctx = can.getContext('2d');
+	var circ = can.getContext('2d');
+        can.height = 1000; can.width = 1920;
+	//can.fillStyle = "black";
+       
+
+	
+        
+        var x = 0, y = 0;
+        function draw() {
+	    //clear old drawing
+            ctx.clearRect(0, 0, 1000, 1920);
+	    
+
+	    //message p recieved from the ros topic
+            x = p; 
+	    y = p;
+	    console.log('var value : ' + p);
+            //ctx.fillStyle = "rgba(0,255,0,0.5)"; //green color for rhombus
+	    //circ.fillStyle = "rgba(0,255,0,0.5)"; //circle
+
+	    //One box
+	    ctx.lineWidth=10;
+            
+	    ctx.beginPath();
+	    ctx.moveTo(x,y); //top left
+	    //var xn=x-20;
+	    ctx.lineTo(100,y); //top right
+	    ctx.strokeStyle = "rgba(0,200,0,1)";
+	    ctx.stroke();
+	    //ctx.closePath();
+
+            /*ctx.beginPath();
+	    ctx.moveTo(x,y);
+	    ctx.lineTo(100,0); //bottom right
+   	    ctx.strokeStyle = "rgba(0,200,0,1)";
+	    ctx.stroke();
+	    ctx.closePath();
+
+            ctx.beginPath();
+	    ctx.moveTo(0,0);
+	    ctx.lineTo(0,100); //bottom left
+   	    ctx.strokeStyle = "rgba(0,200,0,1)";
+	    ctx.stroke();
+	    ctx.closePath();
+
+            ctx.beginPath();
+	    ctx.lineTo(0,0); 
+	    ctx.moveTo(-100,0); //top left
+   	    ctx.strokeStyle = "rgba(0,200,0,1)";
+	    ctx.stroke();
+	    ctx.closePath();*/
+
+	   
+
+            //ctx.fillStyle = "rgba(0,0,0,0.4)";
+            //ctx.fillRect(0, 0, can.width, can.height);
+	 
+            
+	     // a filled circle
+	    circ.beginPath();
+	    circ.moveTo(50,50);
+            circ.arc(x, y, p, 0, 2 * Math.PI);
+            circ.fillStyle = 'rgba(250,0,0,0.4)';
+            circ.fill();
+
+            //circ.fillStyle = "rgba(0,0,0,0.4)";
+            //circ.fillRect(0, 0, can.width, can.height);
+
+            requestAnimationFrame(draw);
+	   
+        }
+        draw();
+
+    </script>
+   
 </body>
 </html>

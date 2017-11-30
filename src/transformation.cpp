@@ -15,6 +15,8 @@
 
 //Global variable declaration (Not good!)
 tf::Vector3 marker_2D_p1;
+ros::Publisher ar_projection_pub;
+ros::Publisher ar_projection_pub_y;
 //--------------
 
 class transform{
@@ -63,6 +65,10 @@ tf::Vector3 from3dTo2d(tf::Vector3 corner)
 // callback method for what to do with every message recieved
 void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 {
+	ros::NodeHandle r;
+	ar_projection_pub = r.advertise<geometry_msgs::Pose>("ar_projection", 1000);	//projected points
+        ar_projection_pub_y = r.advertise<std_msgs::String>("ar_projection_y", 1000);	//projected points
+
 	//std::list<int>
 	const float AR_WIDTH =0.055; //size of ar-cube
 	int nrOfCubes=msg->markers.size(); //number of found cubes (-1?)
@@ -106,22 +112,11 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		//ROS_INFO("position_z in world frame: [%f]", marker_pos_world.getZ());
 		//ROS_INFO("orientation_x in world frame: [%f]", marker_orient_world.x());
 
-		ROS_INFO("position_x in world frame: [%f]", marker_pos_proj.x());	//Why does this not work??
-		ROS_INFO("position_y in world frame: [%f]", marker_pos_proj.y());
-		ROS_INFO("position_z in world frame: [%f]", marker_pos_proj.z());
+		//ROS_INFO("position_x in world frame: [%f]", marker_pos_proj.x());	//Why does this not work??
+		//ROS_INFO("position_y in world frame: [%f]", marker_pos_proj.y());
+		//ROS_INFO("position_z in world frame: [%f]", marker_pos_proj.z());
 
-		
-		
-	}
-	catch (tf::TransformException ex)
-	{
-		ROS_ERROR("%s",ex.what());
-		ros::Duration(1.0).sleep();
-	}
-
-	// end listener
-	
-	if(!msg->markers.empty()){
+		if(!msg->markers.empty()){
 		//for(int i=0; i<nrOfCubes;i++) //repeat the same number as cubes
 		for(int i=0; i<nrOfCubes;i++) //repeat the same number as cubes
 		{
@@ -144,10 +139,10 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 				tf::Vector3 pBottomRight=position+tf::quatRotate(quaternion, tf::Vector3 (AR_WIDTH,-AR_WIDTH,0));
 
 
-				ROS_INFO("---------Projector-----------");
-				ROS_INFO("position_x: [%f]", position.x()); //Dist from camera
-				ROS_INFO("position_y: [%f]", position.y()); //height
-				ROS_INFO("position_z: [%f]", position.z()); //side wise
+				//ROS_INFO("---------Projector-----------");
+				//ROS_INFO("position_x: [%f]", position.x()); //Dist from camera
+				//ROS_INFO("position_y: [%f]", position.y()); //height
+				//ROS_INFO("position_z: [%f]", position.z()); //side wise
 
 				/*ROS_INFO("orientation_x: [%f]", quaternion.x());
 				ROS_INFO("orientation_y: [%f]", quaternion.x());
@@ -161,17 +156,53 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 				//ROS_INFO("ptopleftz: [%f]", pTopLeft.z());
 
 				ROS_INFO("markerID: [%i]", msg->markers[i].id);
-
 				//Convert a point to 2D(for projector) test
-				//marker_2D_p1 = from3dTo2d(marker_pos_proj);
-				marker_2D_p1.x()=pTopLeft.getX();
-				marker_2D_p1.y()=pTopLeft.getY();
-				marker_2D_p1.z()=0;
+				marker_2D_p1 = from3dTo2d(marker_pos_proj);
+				//marker_2D_p1.setX(pTopLeft.getX());
+				//marker_2D_p1.setY(pTopLeft.getY());
+				//marker_2D_p1.setZ(0);
+				//marker_2D_p1.setZ(pTopLeft.getZ());
+				//ROS_INFO("mapped point x: [%f]", marker_2D_p1.getX());
+
+
+				
+				geometry_msgs::Pose ar_msg;
+				ar_msg.position.x = marker_2D_p1.getX();
+				ar_msg.position.y = marker_2D_p1.getY();
+				ar_msg.position.z = 0;
+
+				ar_msg.orientation.x = 0;
+				ar_msg.orientation.y = 0;
+				ar_msg.orientation.z = 0;
+				ar_msg.orientation.w = 0;
+
+
+				ar_projection_pub.publish(ar_msg);
+				//ROS_INFO("MAPPED POINT X: [%f]", ar_msg_x.data.c_str());
+
+				/*std_msgs::String ar_msg_y;
+				ar_msg_y.data = "hello";
+				ar_projection_pub_y.publish(ar_msg_y);
+				ROS_INFO("MAPPED POINT Y: [%s]", ar_msg_y.data.c_str());*/
 			}
 		}
 		//ROS_INFO("Number of cubes: [%i]", nrOfCubes);
 		//ROS_INFO("--------------------------------");
 	}
+		
+	}
+	catch (tf::TransformException ex)
+	{
+		ROS_ERROR("%s",ex.what());
+		ros::Duration(1.0).sleep();
+	}
+
+
+
+
+	// end listener
+	
+	
 }
 
 int main(int argc, char **argv)
@@ -183,24 +214,13 @@ int main(int argc, char **argv)
 	//possible fix
 	//poseCallback(ar_pose)
 	
+
 	ros::Publisher ar_projection_pub_x = n.advertise<std_msgs::String>("ar_projection_x", 1000);	//projected points
         ros::Publisher ar_projection_pub_y = n.advertise<std_msgs::String>("ar_projection_y", 1000);	//projected points
-	
-	ros::Rate loop_rate(50);
-	
+	ros::Rate loop_rate(10);
 	
 	while (ros::ok())
   	{
-		std_msgs::String ar_msg_x;
-		ar_msg_x.data = marker_2D_p1.getX();
-		ar_projection_pub_x.publish(ar_msg_x);
-		ROS_INFO("position x: [%s]", ar_msg_x.data.c_str());
-		
-		std_msgs::String ar_msg_y;
-		ar_msg_y.data = marker_2D_p1.y();
-		ar_projection_pub_y.publish(ar_msg_y);
-		ROS_INFO("position y: [%s]", ar_msg_y.data.c_str());
-
  		ros::spinOnce();
 		loop_rate.sleep();
 

@@ -12,10 +12,16 @@
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
+
+//Global variable declaration (Not good!)
+tf::Vector3 marker_2D_p1;
+//--------------
+
 class transform{
 	public:
 		transform(ros::NodeHandle&); //  n
 		int markerID;
+		
 		
 		//Parameters for projector
 		//const static float view_angle_x=3.14/2;
@@ -25,6 +31,7 @@ class transform{
 
 		//parameter for artificial projection plane
 		//float distance_z=1;
+		
 	private:
 		double sampleMethod(); //declaration of a private example method
 		float ar_pos_x,ar_pos_y,ar_pos_z;
@@ -37,13 +44,6 @@ class transform{
 transform::transform(ros::NodeHandle& n){
 
 }
-//Sample method
-//std::list <Vector3> transform::createPoints(Vector3 centerPoint, Quaternion rotation)
-//{
-	//list=new list <Vector3>();
-	//list.Add(new Vector3(1,1,1));
-	//return list;
-//}
 tf::Vector3 from3dTo2d(tf::Vector3 corner)
 {
 	tf::Vector3 Point2d;
@@ -84,6 +84,7 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 	
 	tf::StampedTransform world_to_ar_marker_6; //pose relative to world
 	tf::StampedTransform projector_to_ar_marker_6; //pose relative to world
+
 	try
 	{
 		ros::Time now = ros::Time::now(); //What??
@@ -109,8 +110,7 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		ROS_INFO("position_y in world frame: [%f]", marker_pos_proj.y());
 		ROS_INFO("position_z in world frame: [%f]", marker_pos_proj.z());
 
-		//Convert a point to 2D(for projector) test
-		tf::Vector3 marker_2D_p1 = from3dTo2d(marker_pos_proj);
+		
 		
 	}
 	catch (tf::TransformException ex)
@@ -144,10 +144,10 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 				tf::Vector3 pBottomRight=position+tf::quatRotate(quaternion, tf::Vector3 (AR_WIDTH,-AR_WIDTH,0));
 
 
-				//ROS_INFO("--------------------------------");
-				//ROS_INFO("position_x: [%f]", position.x()); //Dist from camera
-				//ROS_INFO("position_y: [%f]", position.y()); //height
-				//ROS_INFO("position_z: [%f]", position.z()); //side wise
+				ROS_INFO("---------Projector-----------");
+				ROS_INFO("position_x: [%f]", position.x()); //Dist from camera
+				ROS_INFO("position_y: [%f]", position.y()); //height
+				ROS_INFO("position_z: [%f]", position.z()); //side wise
 
 				/*ROS_INFO("orientation_x: [%f]", quaternion.x());
 				ROS_INFO("orientation_y: [%f]", quaternion.x());
@@ -161,6 +161,12 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 				//ROS_INFO("ptopleftz: [%f]", pTopLeft.z());
 
 				ROS_INFO("markerID: [%i]", msg->markers[i].id);
+
+				//Convert a point to 2D(for projector) test
+				//marker_2D_p1 = from3dTo2d(marker_pos_proj);
+				marker_2D_p1.x()=pTopLeft.getX();
+				marker_2D_p1.y()=pTopLeft.getY();
+				marker_2D_p1.z()=0;
 			}
 		}
 		//ROS_INFO("Number of cubes: [%i]", nrOfCubes);
@@ -177,26 +183,29 @@ int main(int argc, char **argv)
 	//possible fix
 	//poseCallback(ar_pose)
 	
-	ros::Publisher ar_projection_pub = n.advertise<std_msgs::String>("ar_projection", 1000);	//projected points
-	ros::Rate loop_rate(10);
+	ros::Publisher ar_projection_pub_x = n.advertise<std_msgs::String>("ar_projection_x", 1000);	//projected points
+        ros::Publisher ar_projection_pub_y = n.advertise<std_msgs::String>("ar_projection_y", 1000);	//projected points
 	
-	int count=50;
+	ros::Rate loop_rate(50);
+	
+	
 	while (ros::ok())
   	{
-		std_msgs::String ar_msg;
-		std::stringstream ss;
-		ss << count;
-		count = count+1;
-		ar_msg.data = ss.str();
-		ar_projection_pub.publish(ar_msg);
-		ROS_INFO("%s", ar_msg.data.c_str());
- 		if(count>20){
-			count=1;
-		}
+		std_msgs::String ar_msg_x;
+		ar_msg_x.data = marker_2D_p1.getX();
+		ar_projection_pub_x.publish(ar_msg_x);
+		ROS_INFO("position x: [%s]", ar_msg_x.data.c_str());
+		
+		std_msgs::String ar_msg_y;
+		ar_msg_y.data = marker_2D_p1.y();
+		ar_projection_pub_y.publish(ar_msg_y);
+		ROS_INFO("position y: [%s]", ar_msg_y.data.c_str());
+
+ 		ros::spinOnce();
 		loop_rate.sleep();
 
 	}
-	//ros::spin();
+	
 
 	return 0;
 }

@@ -16,7 +16,6 @@
 //Global variable declaration (Not good!)
 tf::Vector3 marker_2D_p1;
 ros::Publisher ar_projection_pub;
-ros::Publisher ar_projection_pub_y;
 //--------------
 
 class transform{
@@ -67,7 +66,6 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 {
 	ros::NodeHandle r;
 	ar_projection_pub = r.advertise<geometry_msgs::Pose>("ar_projection", 1000);	//projected points
-        ar_projection_pub_y = r.advertise<std_msgs::String>("ar_projection_y", 1000);	//projected points
 
 	//std::list<int>
 	const float AR_WIDTH =0.055; //size of ar-cube
@@ -104,7 +102,7 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		//marker_pos_world=world_to_ar_marker_6.getOrigin(); //x position of relative to world frame
 		//marker_orient_world=world_to_ar_marker_6.getRotation();
 
-		marker_pos_proj=projector_to_ar_marker_6.getOrigin(); //x position of relative to projector
+		marker_pos_proj=projector_to_ar_marker_6.getOrigin(); //position of relative to projector
 		marker_orient_proj=projector_to_ar_marker_6.getRotation();
 		
 		//ROS_INFO("position_x in world frame: [%f]", marker_pos_world.x());	//Why does this not work??
@@ -132,11 +130,13 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		
 				//Creating the 4 corners of a box
 				//quatRotate rotates the vector according to the quaternion
-				//
-				tf::Vector3 pTopLeft=position+tf::quatRotate(quaternion, tf::Vector3(AR_WIDTH,AR_WIDTH,0));	//Signs have to be checked!!
-				tf::Vector3 pTopRight=position+tf::quatRotate(quaternion, tf::Vector3 (-AR_WIDTH,AR_WIDTH,0));
-				tf::Vector3 pBottomLeft=position+tf::quatRotate(quaternion, tf::Vector3 (-AR_WIDTH,-AR_WIDTH,0));
-				tf::Vector3 pBottomRight=position+tf::quatRotate(quaternion, tf::Vector3 (AR_WIDTH,-AR_WIDTH,0));
+
+
+				// THIS HAS TO BE VERIFIED
+				tf::Vector3 pTopLeft=marker_pos_proj+tf::quatRotate(quaternion, tf::Vector3(AR_WIDTH,AR_WIDTH,0));
+				tf::Vector3 pTopRight=marker_pos_proj+tf::quatRotate(quaternion, tf::Vector3 (-AR_WIDTH,AR_WIDTH,0));
+				tf::Vector3 pBottomLeft=marker_pos_proj+tf::quatRotate(quaternion, tf::Vector3 (-AR_WIDTH,-AR_WIDTH,0));
+				tf::Vector3 pBottomRight=marker_pos_proj+tf::quatRotate(quaternion, tf::Vector3 (AR_WIDTH,-AR_WIDTH,0));
 
 
 				//ROS_INFO("---------Projector-----------");
@@ -157,7 +157,11 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 
 				ROS_INFO("markerID: [%i]", msg->markers[i].id);
 				//Convert a point to 2D(for projector) test
+
+
 				marker_2D_p1 = from3dTo2d(marker_pos_proj);
+
+
 				//marker_2D_p1.setX(pTopLeft.getX());
 				//marker_2D_p1.setY(pTopLeft.getY());
 				//marker_2D_p1.setZ(0);
@@ -210,20 +214,39 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "mapping_node");
 	ros::NodeHandle n;
 	ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, poseCallback); //subscribing to position and orientation from Alvar
+	ros::Publisher testing_points = n.advertise<geometry_msgs::Pose>("ar_projection", 1);	//test
 	//poseCallback may only be called 1 time since 
 	//possible fix
 	//poseCallback(ar_pose)
 	
 
-	ros::Publisher ar_projection_pub_x = n.advertise<std_msgs::String>("ar_projection_x", 1000);	//projected points
-        ros::Publisher ar_projection_pub_y = n.advertise<std_msgs::String>("ar_projection_y", 1000);	//projected points
-	ros::Rate loop_rate(10);
-	
+	ros::Rate loop_rate(100);
+	int test_var_x=0;
+	int test_var_y=0;
 	while (ros::ok())
   	{
  		ros::spinOnce();
 		loop_rate.sleep();
 
+		//test(without camera)
+		geometry_msgs::Pose ar_points;
+		ar_points.position.x = test_var_x;
+		ar_points.position.y = test_var_y;
+		ar_points.position.z = 0;
+
+		ar_points.orientation.x = 0;
+		ar_points.orientation.y = 0;
+		ar_points.orientation.z = 0;
+		ar_points.orientation.w = 0;
+		testing_points.publish(ar_points);
+
+		test_var_x=test_var_x+5;
+		test_var_y=test_var_y+5;
+		if(test_var_x>200){
+			test_var_x=0;
+			test_var_y=0;
+		}
+		//end test
 	}
 	
 

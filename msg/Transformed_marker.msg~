@@ -1,0 +1,8 @@
+Header header
+uint32 id
+uint32 confidence
+Point2D p1
+Point2D p2
+Point2D p3
+Point2D p4
+

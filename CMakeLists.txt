@@ -7,48 +7,56 @@ project(projection_mapping)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs tf)
-find_package(cmake_modules REQUIRED)
+find_package(catkin REQUIRED COMPONENTS 
+	message_generation	
+	roscpp 	
+	std_msgs 
+	tf
+	#Ar_projection
+	#Transformed_marker
+	#Point2D
+	
+)
+find_package(cmake_modules REQUIRED )
+#find_package(Point2D)
 
 ## Find the Eigen package
 find_package(Eigen REQUIRED)
 include_directories(${EIGEN_INCLUDE_DIRS})
 add_definitions(${EIGEN_DEFINITIONS})
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES believe_in_me
-#  CATKIN_DEPENDS roscpp std_msgs
-#  DEPENDS system_lib
-)
+
+
+
+
+## Generate messages in the 'msg' folder
+ add_message_files(
+   FILES
+   Point2D.msg
+   Transformed_marker.msg
+   Ar_projection.msg
+   
+ )
+
 
 ##Installation directory
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 ##Added files start
-add_executable(publisher src/publisher.cpp)
-add_executable(subscriber src/subscriber.cpp)
-add_executable(combinedTest src/combinedTest.cpp)
+#add_executable(publisher src/publisher.cpp)
+#add_executable(subscriber src/subscriber.cpp)
+#add_executable(combinedTest src/combinedTest.cpp)
 add_executable(transformation src/transformation.cpp)
 
-target_link_libraries(publisher ${catkin_LIBRARIES})
-target_link_libraries(subscriber ${catkin_LIBRARIES})
-target_link_libraries(combinedTest ${catkin_LIBRARIES})
+#target_link_libraries(publisher ${catkin_LIBRARIES})
+#target_link_libraries(subscriber ${catkin_LIBRARIES})
+#target_link_libraries(combinedTest ${catkin_LIBRARIES})
 target_link_libraries(transformation ${catkin_LIBRARIES})
 
-add_dependencies(publisher dep_cpp)
-add_dependencies(subscriber dep_cpp)
-add_dependencies(combinedTest dep_cpp)
+#add_dependencies(publisher dep_cpp)
+#add_dependencies(subscriber dep_cpp)
+#add_dependencies(combinedTest dep_cpp)
 add_dependencies(transformation dep_cpp)
 ##added files end
 
@@ -85,12 +93,15 @@ add_dependencies(transformation dep_cpp)
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+   #Point2D
+   #Transformed_marker
+   #Ar_projection
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -106,11 +117,7 @@ add_dependencies(transformation dep_cpp)
 #   Action2.action
 # )
 
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -142,10 +149,11 @@ add_dependencies(transformation dep_cpp)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+ INCLUDE_DIRS include
 #  LIBRARIES believe_in_me
 #  CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
+   CATKIN_DEPENDS message_runtime std_msgs
 )
 
 ###########
@@ -167,7 +175,7 @@ include_directories(
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -182,7 +190,7 @@ include_directories(
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+ #add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node

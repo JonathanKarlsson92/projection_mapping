@@ -4,7 +4,12 @@
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
 #include <geometry_msgs/Twist.h> 
 #include <math.h> 
-//#include <Vector2.h>
+//Custom message
+#include "projection_mapping/Point2D.h"
+#include "projection_mapping/Transformed_marker.h"
+#include "projection_mapping/Ar_projection.h"
+//End custom message
+
 #define view_angle_x 3.14/2
 #define view_angle_y 3.14/3
 #define resolution_x 1024
@@ -16,6 +21,7 @@
 //Global variable declaration (Not good!)
 tf::Vector3 marker_2D_p1;
 ros::Publisher ar_projection_pub;
+
 //--------------
 
 class transform{
@@ -213,40 +219,80 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "mapping_node");
 	ros::NodeHandle n;
-	ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, poseCallback); //subscribing to position and orientation from Alvar
-	ros::Publisher testing_points = n.advertise<geometry_msgs::Pose>("ar_projection", 1);	//test
+	//ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, poseCallback); //subscribing to position and orientation from Alvar
+	//ros::Publisher testing_points = n.advertise<geometry_msgs::Pose>("ar_projection", 1);	//test
+	ros::Publisher ar_publisher=n.advertise<projection_mapping::Transformed_marker>("ar_projection",100); // test of message
+       
 	//poseCallback may only be called 1 time since 
 	//possible fix
 	//poseCallback(ar_pose)
 	
 
-	ros::Rate loop_rate(100);
-	int test_var_x=0;
-	int test_var_y=0;
+	ros::Rate loop_rate(25);
+	int v_x=0;
+	int v_y=0;
 	while (ros::ok())
   	{
  		ros::spinOnce();
 		loop_rate.sleep();
 
 		//test(without camera)
-		geometry_msgs::Pose ar_points;
-		ar_points.position.x = test_var_x;
-		ar_points.position.y = test_var_y;
-		ar_points.position.z = 0;
+		//geometry_msgs::Pose ar_points;
+		//ar_points.position.x = test_var_x;
+		//ar_points.position.y = test_var_y;
+		/*ar_points.position.z = 0;
 
 		ar_points.orientation.x = 0;
 		ar_points.orientation.y = 0;
 		ar_points.orientation.z = 0;
 		ar_points.orientation.w = 0;
-		testing_points.publish(ar_points);
-
-		test_var_x=test_var_x+5;
-		test_var_y=test_var_y+5;
-		if(test_var_x>200){
-			test_var_x=0;
-			test_var_y=0;
+		testing_points.publish(ar_points);*/
+		v_x=v_x+5;
+		v_y=v_y+5;
+		if(v_x>200){
+			v_x=0;
+			v_y=0;
 		}
 		//end test
+
+		//begin custom message test
+
+		//projection_mapping::Ar_projection points;
+		projection_mapping::Transformed_marker marker;
+		marker.id=1;
+		marker.p1.X=1+v_x;
+		marker.p1.Y=10+v_y;
+		
+		marker.p2.X=40+v_x;
+		marker.p2.Y=10+v_y;
+
+		marker.p3.X=40+v_x;
+		marker.p3.Y=100+v_y;
+		
+		marker.p4.X=1+v_x;
+		marker.p4.Y=100+v_y;
+		/*points.markers[0].id=4;
+
+		points.markers[0].p1.X=1;
+		points.markers[0].p1.Y=1;
+
+		points.markers[0].p2.X=10;
+		points.markers[0].p2.Y=10;
+
+		points.markers[0].p3.X=10;
+		points.markers[0].p3.Y=40;
+
+		points.markers[0].p4.X=50;
+		points.markers[0].p4.Y=20;*/
+
+
+		
+		//ROS_INFO("MAPPED POINT p1X: [%i]", points.markers[0].p1.X);
+		ar_publisher.publish(marker);
+		//ar_publisher.publish(points);
+		
+		//end custom message test
+	
 	}
 	
 
@@ -254,7 +300,7 @@ int main(int argc, char **argv)
 }
 
 ///Todo
+//Fix error loading manifest problem
 // initialize pose to avoid huge values
-// subscribe to relative projector pose
 // enable tracking of multiple cubes
 // solve hard coded marker 6

@@ -46,13 +46,14 @@ var p=[2];
 var listener = new ROSLIB.Topic({
 		ros : rbServer,
 		name : '/ar_projection',	
-		messageType : 'geometry_msgs/Pose'
+		messageType : 'projection_mapping/Transformed_marker'
 	});
 
 listener.subscribe(function(message) {
-	console.log('Received message on ' + listener.name + 'x: ' + message.position.x+ 'y: ' + message.position.y);
-	p[0]=message.position.x;
-	p[1]=message.position.y;
+	//console.log('Received message on ' + listener.name + 'x: ' + message.position.x+ 'y: ' + message.position.y);
+//console.log('Received message on ' + listener.name + 'x: ' +message.p1.X+ 'y: ' + message.p1.Y);
+	//p[0]=message.position.x;
+	//p[1]=message.position.y;
 });
 
 
@@ -185,7 +186,7 @@ listener.subscribe(function(message) {
 	    });
 	layer.add(poly);
 	stage.add(layer);*/
-	console.log("		x: " + p[0] + "y: "+p[1]);
+	//console.log("		x: " + p[0] + "y: "+p[1]);
 	console.log("top left of rhombus"+p[0]+"   "+p[1]);
     }, layer);
 

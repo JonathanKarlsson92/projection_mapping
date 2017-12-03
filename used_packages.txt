@@ -1,0 +1,9 @@
+-------------Here we can write packages and dependencies that are downloaded to make it easier if someone else will work with this-------------
+Jonathan Karlsson, Linlin Guo ,Per Wiklund
+28/11-2017
+
+
+*Ubuntu 14.04 
+*ROS Indigo
+*projection_mapping https://github.com/JonathanKarlsson92/projection_mapping/
+

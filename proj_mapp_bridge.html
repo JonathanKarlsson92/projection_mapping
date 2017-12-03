@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1"> 
+<!-- <meta charset="ISO-8859-1"> --> 
+<meta charset="utf-8">
 <!--
 The next two lines bring in the JavaScript files that support rosbridge integration.
 -->
 <!--<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script> -->
+
+
+<script src="https://cdn.rawgit.com/konvajs/konva/1.7.6/konva.min.js"></script>
 
 <script src="roslibjs/build/roslib.js"></script>
 <!--<script src="test.js"></script>-->
@@ -41,7 +45,7 @@ var p=[2];
 
 var listener = new ROSLIB.Topic({
 		ros : rbServer,
-		name : '/ar_projection',
+		name : '/ar_projection',	
 		messageType : 'geometry_msgs/Pose'
 	});
 
@@ -57,84 +61,137 @@ listener.subscribe(function(message) {
 
 <body bgcolor="black">
 <div id="feedback"></div> <!--  <---Something important for updating -->
-<canvas id="canvas" ></canvas>
-    <script>
-	//make a black background
-        var can = document.getElementById('canvas');
-	var ctx = can.getContext('2d');
-	var circ = can.getContext('2d');
-        can.height = 1000; can.width = 1920;
-	//can.fillStyle = "black";
-       
+<!-- Script for drawing polygons
+	<div id="container"></div>
+	<script>
+		
+	//function draw(){
+	    var width = window.innerWidth;
+	    var height = window.innerHeight;
 
+	    var stage = new Konva.Stage({
+	      container: 'container',
+	      width: width,
+	      height: height
+	    });
+		p[0]=0;
+		p[1]=0;
+
+	    var layer = new Konva.Layer();
+
+	    var poly = new Konva.Line({
+		
+	      points: [500+20+p[0], 500+p[1], 700+20+p[0], 500+p[1], 700+p[0], 700+p[1], 500+p[0], 700+p[1]],
+	      fill: '#00D2FF',
+	      stroke: 'black',
+	      strokeWidth: 5,
+	      closed : true
+	    });
+		var hexagon = new Konva.RegularPolygon({
+			x: stage.getWidth() / 2,
+			y: stage.getHeight() / 2,
+			sides: 6,
+			radius: 20,
+			fill: 'red',
+			stroke: 'black',
+			strokeWidth: 4
+		    });
+	    // add the shape to the layer
+	    layer.add(hexagon);
+
+	    // add the layer to the stage
+	    stage.add(layer);
 	
-        
-        //var x = 0, y = 0;
-        function draw() {
-	    //clear old drawing
-            ctx.clearRect(0, 0, 1000, 1920);
-	    
 
-	    //message p recieved from the ros topic
-            x = p[0]; 
-	    y = -p[1];
-            //ctx.fillStyle = "rgba(0,255,0,0.5)"; //green color for rhombus
-	    //circ.fillStyle = "rgba(0,255,0,0.5)"; //circle
+    var anim = new Konva.Animation(function(frame) {
+        hexagon.setX(500+p[0]);
+	//hexagon.setY(500+p[1]);
+    }, layer);
 
-	    //One box
-	    /*ctx.lineWidth=10;
-            
-	    ctx.beginPath();
-	    ctx.moveTo(x,y); //top left
-	    //var xn=x-20;
-	    ctx.lineTo(x+50,y); //top right
-	    ctx.strokeStyle = "rgba(0,200,0,1)";
-	    ctx.stroke();*/
-	    //ctx.closePath();
+    anim.start();
+ 	//requestAnimationFrame(draw);
+	}
+	console.log("		x: " + p[0] + "y: "+p[1]);
+	//draw();
+</script> -->
 
-            /*ctx.beginPath();
-	    ctx.moveTo(x,y);
-	    ctx.lineTo(100,0); //bottom right
-   	    ctx.strokeStyle = "rgba(0,200,0,1)";
-	    ctx.stroke();
-	    ctx.closePath();
+<div id="container"></div>
+<script>
+    p[0]=0;
+    p[1]=0;
 
-            ctx.beginPath();
-	    ctx.moveTo(0,0);
-	    ctx.lineTo(0,100); //bottom left
-   	    ctx.strokeStyle = "rgba(0,200,0,1)";
-	    ctx.stroke();
-	    ctx.closePath();
+    var width = window.innerWidth;
+    var height = window.innerHeight;
 
-            ctx.beginPath();
-	    ctx.lineTo(0,0); 
-	    ctx.moveTo(-100,0); //top left
-   	    ctx.strokeStyle = "rgba(0,200,0,1)";
-	    ctx.stroke();
-	    ctx.closePath();*/
+    var stage = new Konva.Stage({
+        container: 'container',
+        width: width,
+        height: height
+    });
 
-	   
+    var layer = new Konva.Layer();
 
-            //ctx.fillStyle = "rgba(0,0,0,0.4)";
-            //ctx.fillRect(0, 0, can.width, can.height);
-	 
-            
-	     // a filled circle
-	    circ.beginPath();
-	    //circ.moveTo(50,50);
-            circ.arc(x, y, 20, 0, 2 * Math.PI);
-            circ.fillStyle = 'rgba(250,0,0,0.4)';
-            circ.fill();
+    var hexagon = new Konva.RegularPolygon({
+        x: stage.getWidth() / 2,
+        y: stage.getHeight() / 2,
+        sides: 6,
+        radius: 20,
+        fill: 'red',
+        stroke: 'black',
+        strokeWidth: 4
+    });
+     var poly = new Konva.Line({
+		
+	      points: [500+20, 500, 700+20, 500, 700, 700, 500, 700],	//set to the 4 calculated points
+	      fill: '#00D2FF',
+	      stroke: 'black',
+	      strokeWidth: 5,
+	      closed : true
+	    });
+ var poly2 = new Konva.Line({
+	
+      points: [500+50, 500, 700+50, 500-100, 700, 700-100, 500, 700],	//set to the 4 calculated points
+      fill: '#00D2FF',
+      stroke: 'black',
+      strokeWidth: 5,
+      closed : true
+    });
 
-            //circ.fillStyle = "rgba(0,0,0,0.4)";
-            //circ.fillRect(0, 0, can.width, can.height);
+    layer.add(hexagon);
+    layer.add(poly);
+    layer.add(poly2);
+    stage.add(layer);
 
-            requestAnimationFrame(draw);
-	   
-        }
-        draw();
+    var amplitude = 100;
+    var period = 2000;
+    // in ms
+    var centerX = stage.getWidth() / 2;
 
-    </script>
-   
+    var anim = new Konva.Animation(function(frame) {
+        hexagon.setX(p[0]);
+	hexagon.setY(p[1]);
+	poly.setX(p[0]);
+	poly.setY(p[1]);
+
+	poly2.setX(p[0]-300);
+	poly2.setY(p[1]-300);
+	//poly.points=[500+20+p[0], 500+p[1], 700+20+p[0], 500+p[1], 700+p[0], 700+p[1], 500+p[0], 700+p[1]];
+	/*poly = new Konva.Line({
+	      points: [500+20+p[0], 500+p[1], 700+20+p[0], 500+p[1], 700+p[0], 700+p[1], 500+p[0], 700+p[1]],
+	      fill: '#00D2FF',
+	      stroke: 'green',
+	      strokeWidth: 5,
+	      closed : true
+	    });
+	layer.add(poly);
+	stage.add(layer);*/
+	console.log("		x: " + p[0] + "y: "+p[1]);
+	console.log("top left of rhombus"+p[0]+"   "+p[1]);
+    }, layer);
+
+    anim.start();
+</script>
+
+
 </body>
 </html>

@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 	//poseCallback(ar_pose)
 	
 
-	ros::Rate loop_rate(25);
+	ros::Rate loop_rate(10);
 	int v_x=0;
 	int v_y=0;
 	while (ros::ok())

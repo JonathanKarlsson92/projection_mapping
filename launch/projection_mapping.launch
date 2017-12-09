@@ -13,6 +13,9 @@
 	<arg name="cam_image_topic" default="/camera/depth_registered/points" />
 
 	<include file="$(find freenect_launch)/launch/examples/freenect-registered-xyzrgb.launch"/>
+
+         <!--roslaunch openni2_launch openni2.launch-->
+
 	<!-- Open server -->
 	<!-- <include file="$(find project_mapping)/proj_mapp_bridge.html"/> -->
 

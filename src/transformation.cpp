@@ -10,18 +10,25 @@
 #include "projection_mapping/Ar_projection.h"
 //End custom message
 
-#define view_angle_x 3.14/2
-#define view_angle_y 3.14/3
-#define resolution_x 1024
-#define resolution_y 720
+// broadcaster
+#include <tf/transform_broadcaster.h>
+
+// parameters that have to be set for the projector that is used
+#define view_angle_x 3.14/6
+#define view_angle_y 3.14/8
+#define resolution_x 1920
+#define resolution_y 1080
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
 
-//Global variable declaration (Not good!)
+//Global variable declaration (Not optimal!)
 tf::Vector3 marker_2D_p1;
-ros::Publisher ar_projection_pub;
-
+tf::Vector3 marker_2D_p2;
+tf::Vector3 marker_2D_p3;
+tf::Vector3 marker_2D_p4;
+//ros::Publisher ar_projection_pub;
+ros::Publisher ar_publisher;
 //--------------
 
 class transform{
@@ -29,12 +36,6 @@ class transform{
 		transform(ros::NodeHandle&); //  n
 		int markerID;
 		
-		
-		//Parameters for projector
-		//const static float view_angle_x=3.14/2;
-		//const static float view_angle_y=3.14/3;
-		//const static float resolution_x=1024;
-		//const static float resolution_y=720;
 
 		//parameter for artificial projection plane
 		//float distance_z=1;
@@ -55,14 +56,18 @@ tf::Vector3 from3dTo2d(tf::Vector3 corner)
 {
 	tf::Vector3 Point2d;
 
+	//offset in calibration
+	float offset_x=0.08;
+	float offset_y=0.08;
 	//position in x
 	float proj_const_x=resolution_x/std::tan(view_angle_x);		
-	Point2d.setX(proj_const_x*corner.x()/corner.z());
+	Point2d.setX(proj_const_x*(corner.x()+offset_x)/corner.z());
 
 	//position in y
 	float proj_const_y=resolution_y/std::tan(view_angle_y);		
-	Point2d.setY(proj_const_y*corner.y()/corner.z());
+	Point2d.setY(proj_const_y*(corner.y()+offset_y)/corner.z());
 
+	Point2d.setZ(0);
 	return Point2d; //currently 3d but nothing stored in z
 }
 
@@ -71,8 +76,10 @@ tf::Vector3 from3dTo2d(tf::Vector3 corner)
 void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 {
 	ros::NodeHandle r;
-	ar_projection_pub = r.advertise<geometry_msgs::Pose>("ar_projection", 1000);	//projected points
-
+	ar_publisher=r.advertise<projection_mapping::Transformed_marker>("ar_projection",10); // publishing message
+	//ar_projection_pub = r.advertise<geometry_msgs::Pose>("ar_projection", 1000);	//projected points
+	//ros::Publisher ar_publisher=r.advertise<projection_mapping::Transformed_marker>("ar_projection",100); // test of message
+       
 	//std::list<int>
 	const float AR_WIDTH =0.055; //size of ar-cube
 	int nrOfCubes=msg->markers.size(); //number of found cubes (-1?)
@@ -102,8 +109,10 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		//listener.lookupTransform("/world", "/ar_marker_6",  ros::Time(0), world_to_ar_marker_6);
 
 		//Assigning marker id8 as projector
-		listener.waitForTransform("/ar_marker_8", "/ar_marker_6", now, ros::Duration(3.0));
-		listener.lookupTransform("/ar_marker_8", "/ar_marker_6",  ros::Time(0), projector_to_ar_marker_6);
+		//listener.waitForTransform("/ar_marker_4", "/ar_marker_2", now, ros::Duration(3.0));
+		//listener.lookupTransform("/ar_marker_4", "/ar_marker_2",  ros::Time(0), projector_to_ar_marker_6);
+		listener.waitForTransform( "/camera_depth_optical_frame","/ar_marker_4", now, ros::Duration(0.5));			//Add "if marker x is seen"
+		listener.lookupTransform( "/camera_depth_optical_frame","/ar_marker_4",  ros::Time(0), projector_to_ar_marker_6);
 
 		//marker_pos_world=world_to_ar_marker_6.getOrigin(); //x position of relative to world frame
 		//marker_orient_world=world_to_ar_marker_6.getRotation();
@@ -111,10 +120,6 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		marker_pos_proj=projector_to_ar_marker_6.getOrigin(); //position of relative to projector
 		marker_orient_proj=projector_to_ar_marker_6.getRotation();
 		
-		//ROS_INFO("position_x in world frame: [%f]", marker_pos_world.x());	//Why does this not work??
-		//ROS_INFO("position_y in world frame: [%f]", marker_pos_world.getY());
-		//ROS_INFO("position_z in world frame: [%f]", marker_pos_world.getZ());
-		//ROS_INFO("orientation_x in world frame: [%f]", marker_orient_world.x());
 
 		//ROS_INFO("position_x in world frame: [%f]", marker_pos_proj.x());	//Why does this not work??
 		//ROS_INFO("position_y in world frame: [%f]", marker_pos_proj.y());
@@ -125,8 +130,10 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		for(int i=0; i<nrOfCubes;i++) //repeat the same number as cubes
 		{
 			int markerID=msg->markers[i].id; // id of detected marker i
-			if(markerID!=8) //if ar-code is not the projector
+			if(markerID==4) //if ar-code is not the projector
 			{
+				
+
 				//get the position and orientation of cube nr [i]
 				tf::Vector3 position(msg->markers[i].pose.pose.position.x, msg->markers[i].pose.pose.position.y, msg->markers[i].pose.pose.position.z);
 				tf::Quaternion quaternion(msg->markers[i].pose.pose.orientation.x,
@@ -139,65 +146,63 @@ void poseCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 
 
 				// THIS HAS TO BE VERIFIED
-				tf::Vector3 pTopLeft=marker_pos_proj+tf::quatRotate(quaternion, tf::Vector3(AR_WIDTH,AR_WIDTH,0));
-				tf::Vector3 pTopRight=marker_pos_proj+tf::quatRotate(quaternion, tf::Vector3 (-AR_WIDTH,AR_WIDTH,0));
-				tf::Vector3 pBottomLeft=marker_pos_proj+tf::quatRotate(quaternion, tf::Vector3 (-AR_WIDTH,-AR_WIDTH,0));
-				tf::Vector3 pBottomRight=marker_pos_proj+tf::quatRotate(quaternion, tf::Vector3 (AR_WIDTH,-AR_WIDTH,0));
+				tf::Vector3 pTopLeft=marker_pos_proj+tf::quatRotate(marker_orient_proj, tf::Vector3(AR_WIDTH,AR_WIDTH,0));		//Is the error here?
+				tf::Vector3 pTopRight=marker_pos_proj+tf::quatRotate(marker_orient_proj, tf::Vector3 (-AR_WIDTH,AR_WIDTH,0));
+				tf::Vector3 pBottomRight=marker_pos_proj+tf::quatRotate(marker_orient_proj, tf::Vector3 (-AR_WIDTH,-AR_WIDTH,0));
+				tf::Vector3 pBottomLeft=marker_pos_proj+tf::quatRotate(marker_orient_proj, tf::Vector3 (AR_WIDTH,-AR_WIDTH,0));
+
+				//tf::Vector3 pTopLeft=marker_pos_proj+tf::Vector3(AR_WIDTH,AR_WIDTH,0);		//Is the error here?
+				//tf::Vector3 pTopRight=marker_pos_proj+tf::Vector3(-AR_WIDTH,AR_WIDTH,0);
+				//tf::Vector3 pBottomRight=marker_pos_proj+tf::Vector3(-AR_WIDTH,-AR_WIDTH,0);
+				//tf::Vector3 pBottomLeft=marker_pos_proj+tf::Vector3(AR_WIDTH,-AR_WIDTH,0);
+
+				/*ROS_INFO("ptopleftx: [%f]", pTopLeft.x());
+				ROS_INFO("ptoplefty: [%f]", pTopLeft.y());
+				ROS_INFO("ptopleftz: [%f]", pTopLeft.z());
+
+				ROS_INFO("pbottomrightx: [%f]", pBottomRight.x());
+				ROS_INFO("pbottomrighty: [%f]", pBottomRight.y());
+				ROS_INFO("pbottomrightz: [%f]", pBottomRight.z());
+				*/
+
+				//ROS_INFO("markerID: [%i]", msg->markers[i].id);
 
 
-				//ROS_INFO("---------Projector-----------");
-				//ROS_INFO("position_x: [%f]", position.x()); //Dist from camera
-				//ROS_INFO("position_y: [%f]", position.y()); //height
-				//ROS_INFO("position_z: [%f]", position.z()); //side wise
-
-				/*ROS_INFO("orientation_x: [%f]", quaternion.x());
-				ROS_INFO("orientation_y: [%f]", quaternion.x());
-				ROS_INFO("orientation_z: [%f]", quaternion.x());
-				ROS_INFO("orientation_z: [%f]", quaternion.x());*/
-
-				//topleftpoint
-				//ROS_INFO("--------");
-				//ROS_INFO("ptopleftx: [%f]", pTopLeft.x());
-				//ROS_INFO("ptoplefty: [%f]", pTopLeft.y());
-				//ROS_INFO("ptopleftz: [%f]", pTopLeft.z());
-
-				ROS_INFO("markerID: [%i]", msg->markers[i].id);
-				//Convert a point to 2D(for projector) test
+				marker_2D_p1 = from3dTo2d(pTopLeft); //Is the error here?
+				marker_2D_p2 = from3dTo2d(pTopRight);
+				marker_2D_p3 = from3dTo2d(pBottomRight);
+				marker_2D_p4 = from3dTo2d(pBottomLeft);
 
 
-				marker_2D_p1 = from3dTo2d(marker_pos_proj);
+				ROS_INFO("--------------------------------------");
+				ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
+				ROS_INFO("ptoplefty: [%f]", from3dTo2d(pTopLeft).y());
+				ROS_INFO("ptopleftz: [%f]", from3dTo2d(pTopLeft).z());
 
+				ROS_INFO("pbottomrightx: [%f]", from3dTo2d(pBottomRight).x());
+				ROS_INFO("pbottomrighty: [%f]", from3dTo2d(pBottomRight).y());
+				ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());
 
-				//marker_2D_p1.setX(pTopLeft.getX());
-				//marker_2D_p1.setY(pTopLeft.getY());
-				//marker_2D_p1.setZ(0);
-				//marker_2D_p1.setZ(pTopLeft.getZ());
-				//ROS_INFO("mapped point x: [%f]", marker_2D_p1.getX());
+				//stuff for the publisher
+				projection_mapping::Transformed_marker marker;
+				marker.id=0;
+				marker.p1.X=marker_2D_p1.x()+resolution_x/2;
+				marker.p1.Y=marker_2D_p1.y()+resolution_y/2;
 
+				marker.p2.X=marker_2D_p2.x()+resolution_x/2;
+				marker.p2.Y=marker_2D_p2.y()+resolution_y/2;
 
+				marker.p3.X=marker_2D_p3.x()+resolution_x/2;
+				marker.p3.Y=marker_2D_p3.y()+resolution_y/2;
+
+				marker.p4.X=marker_2D_p4.x()+resolution_x/2;
+				marker.p4.Y=marker_2D_p4.y()+resolution_y/2;
 				
-				geometry_msgs::Pose ar_msg;
-				ar_msg.position.x = marker_2D_p1.getX();
-				ar_msg.position.y = marker_2D_p1.getY();
-				ar_msg.position.z = 0;
+				ar_publisher.publish(marker);
 
-				ar_msg.orientation.x = 0;
-				ar_msg.orientation.y = 0;
-				ar_msg.orientation.z = 0;
-				ar_msg.orientation.w = 0;
-
-
-				ar_projection_pub.publish(ar_msg);
-				//ROS_INFO("MAPPED POINT X: [%f]", ar_msg_x.data.c_str());
-
-				/*std_msgs::String ar_msg_y;
-				ar_msg_y.data = "hello";
-				ar_projection_pub_y.publish(ar_msg_y);
-				ROS_INFO("MAPPED POINT Y: [%s]", ar_msg_y.data.c_str());*/
 			}
+
 		}
-		//ROS_INFO("Number of cubes: [%i]", nrOfCubes);
-		//ROS_INFO("--------------------------------");
 	}
 		
 	}
@@ -219,88 +224,32 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "mapping_node");
 	ros::NodeHandle n;
-	//ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1000, poseCallback); //subscribing to position and orientation from Alvar
-	//ros::Publisher testing_points = n.advertise<geometry_msgs::Pose>("ar_projection", 1);	//test
-	ros::Publisher ar_publisher=n.advertise<projection_mapping::Transformed_marker>("ar_projection",100); // test of message
-       
-	//poseCallback may only be called 1 time since 
-	//possible fix
-	//poseCallback(ar_pose)
+       	ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 10, poseCallback); //subscribing to position and orientation from Alvar
 	
+	// Adding projector to tree
+	tf::TransformBroadcaster br;
+  	tf::Transform transform;
 
-	ros::Rate loop_rate(10);
-	int v_x=0;
-	int v_y=0;
+	ros::Rate loop_rate(20);
 	while (ros::ok())
   	{
  		ros::spinOnce();
+
+		//ROS_INFO("MAPPED POINT p1X: [%f]", marker_2D_p1.x());
+		//ROS_INFO("MAPPED POINT p1Y: [%f]", marker_2D_p1.y());
+		//ROS_INFO("MAPPED POINT p1Z: [%f]", marker_2D_p1.z());
+
 		loop_rate.sleep();
 
-		//test(without camera)
-		//geometry_msgs::Pose ar_points;
-		//ar_points.position.x = test_var_x;
-		//ar_points.position.y = test_var_y;
-		/*ar_points.position.z = 0;
-
-		ar_points.orientation.x = 0;
-		ar_points.orientation.y = 0;
-		ar_points.orientation.z = 0;
-		ar_points.orientation.w = 0;
-		testing_points.publish(ar_points);*/
-		v_x=v_x+5;
-		v_y=v_y+5;
-		if(v_x>200){
-			v_x=0;
-			v_y=0;
-		}
-		//end test
-
-		//begin custom message test
-
-		//projection_mapping::Ar_projection points;
-		projection_mapping::Transformed_marker marker;
-		marker.id=1;
-		marker.p1.X=1+v_x;
-		marker.p1.Y=10+v_y;
-		
-		marker.p2.X=40+v_x;
-		marker.p2.Y=10+v_y;
-
-		marker.p3.X=40+v_x;
-		marker.p3.Y=100+v_y;
-		
-		marker.p4.X=1+v_x;
-		marker.p4.Y=100+v_y;
-		/*points.markers[0].id=4;
-
-		points.markers[0].p1.X=1;
-		points.markers[0].p1.Y=1;
-
-		points.markers[0].p2.X=10;
-		points.markers[0].p2.Y=10;
-
-		points.markers[0].p3.X=10;
-		points.markers[0].p3.Y=40;
-
-		points.markers[0].p4.X=50;
-		points.markers[0].p4.Y=20;*/
-
-
-		
-		//ROS_INFO("MAPPED POINT p1X: [%i]", points.markers[0].p1.X);
-		ar_publisher.publish(marker);
-		//ar_publisher.publish(points);
-		
-		//end custom message test
-	
 	}
-	
-
 	return 0;
 }
 
 ///Todo
-//Fix error loading manifest problem
+//Fix error loading manifest problem (Fixed, remember to use $source devel/setup.bash)
+
+//----------------------------------------------------------------
+//Fix a transformation from projector marker to lens
 // initialize pose to avoid huge values
 // enable tracking of multiple cubes
 // solve hard coded marker 6

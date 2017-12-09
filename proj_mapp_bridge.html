@@ -1,57 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!-- <meta charset="ISO-8859-1"> --> 
-<meta charset="utf-8">
-<!--
-The next two lines bring in the JavaScript files that support rosbridge integration.
--->
 <!--<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script> -->
 
-
+<meta charset="utf-8">
 <script src="https://cdn.rawgit.com/konvajs/konva/1.7.6/konva.min.js"></script>
-
 <script src="roslibjs/build/roslib.js"></script>
-<!--<script src="test.js"></script>-->
 <script type="text/javascript" type="text/javascript">
+
 // This function connects to the rosbridge server running on the local computer on port 9090
 var rbServer = new ROSLIB.Ros({
-    url : 'ws://localhost:9090'
- });
+	url : 'ws://localhost:9090'
+});
 
  // This function is called upon the rosbridge connection event
  rbServer.on('connection', function() {
-     // Write appropriate message to #feedback div when successfully connected to rosbridge
-     var fbDiv = document.getElementById('feedback');
-     fbDiv.innerHTML += "<p>Connected to websocket server.</p>";
- });
+	// Write appropriate message to #feedback div when successfully connected to rosbridge
+	var fbDiv = document.getElementById('feedback');
+	fbDiv.innerHTML += "<p>Connected to websocket server.</p>";
+});
 
 // This function is called when there is an error attempting to connect to rosbridge
 rbServer.on('error', function(error) {
-    // Write appropriate message to #feedback div upon error when attempting to connect to rosbridge
-    var fbDiv = document.getElementById('feedback');
-    fbDiv.innerHTML += "<p>Error connecting to websocket server.</p>";
+	// Write appropriate message to #feedback div upon error when attempting to connect to rosbridge
+	var fbDiv = document.getElementById('feedback');
+	fbDiv.innerHTML += "<p>Error connecting to websocket server.</p>";
 });
 
 // This function is called when the connection to rosbridge is closed
 rbServer.on('close', function() {
-    // Write appropriate message to #feedback div upon closing connection to rosbridge
-    var fbDiv = document.getElementById('feedback');
-    fbDiv.innerHTML += "<p>Connection to websocket server closed.</p>";
+	// Write appropriate message to #feedback div upon closing connection to rosbridge
+	var fbDiv = document.getElementById('feedback');
+	fbDiv.innerHTML += "<p>Connection to websocket server closed.</p>";
  });
 
+//Define array to hold the data from ar_projection message
 var p=[9];
 
+//Define listener, listening to ar_projection
 var listener = new ROSLIB.Topic({
-		ros : rbServer,
-		name : '/ar_projection',	
-		messageType : 'projection_mapping/Transformed_marker'
-	});
+	ros : rbServer,
+	name : '/ar_projection',	
+	messageType : 'projection_mapping/Transformed_marker'
+});
 
 listener.subscribe(function(message) {
-	//console.log('Received message on ' + listener.name + 'x: ' + message.position.x+ 'y: ' + message.position.y);
-	console.log('Received message on ' + listener.name + 'x: ' +message.p1.X+ 'y: ' + message.p1.Y);
+	//Printing the marker id and position from the recieved message
+	console.log('p1: ' +'     x: ' +message.p1.X+ '    y: ' + message.p1.Y);
+	console.log('p2: ' +'     x: ' +message.p2.X+ '    y: ' + message.p2.Y);
+	console.log('p3: ' +'     x: ' +message.p3.X+ '    y: ' + message.p3.Y);
+	console.log('p4: ' +'     x: ' +message.p4.X+ '    y: ' + message.p4.Y);
+
+	//Assigning message to global list p for animation
 	p[0]=message.id;	
 	p[1]=message.p1.X;
 	p[2]=message.p1.Y;
@@ -68,47 +69,41 @@ listener.subscribe(function(message) {
 </head>
 
 <body bgcolor="black">
-<div id="feedback"></div> <!--  <---Something important for updating -->
-
+<div id="feedback"></div> 
 <div id="container"></div>
 <script>
 
-    var width = window.innerWidth;
-    var height = window.innerHeight;
+	//set width and heigt to size of current window(in the browser)
+	var width = window.innerWidth;
+	var height = window.innerHeight;
 
-    var stage = new Konva.Stage({
-        container: 'container',
-        width: width,
-        height: height
-    });
-
-    var layer = new Konva.Layer();
-
-	var poly = new Konva.Line({
-		
-	      points: [500+20, 500, 700+20, 500, 700, 700, 500, 700],	
-	      fill: '#00D2FF',
-	      stroke: 'black',
-	      strokeWidth: 5,
-	      closed : true
+	//define stage
+	var stage = new Konva.Stage({
+		container: 'container',
+		width: width,
+		height: height
 	});
 
+	//define konva layer
+	var layer = new Konva.Layer();
+
+	//Initialize poly
+	var poly = new Konva.Line({
+		points: [0,0,0,0,0,0,0,0],	
+		fill: '#00D2FF',
+		stroke: 'black',
+		strokeWidth: 5,
+		closed : true
+	});
+	//Add to layer and stage
 	layer.add(poly);
 	stage.add(layer);
-    var anim = new Konva.Animation(function() {
-		
-	
-		console.log('p is: '+p[1]);
-		//poly.setY(-p[1]); 	//working
-		poly.setPoints([500+20-p[1], 500-p[2], 700+20-p[1], 500-p[2], 700+p[1], 700-p[2], 500+p[1], 700-p[2]]); //also working
-    }, layer);
+	var anim = new Konva.Animation(function() {
+		//Poly is updated with the latest info from the camera
+		poly.setPoints([p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]]); //also working
+	}, layer);
 
-    anim.start();
-
-
-	
+	anim.start();
 </script>
-
-
 </body>
 </html>

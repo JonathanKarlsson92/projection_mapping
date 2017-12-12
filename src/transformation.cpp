@@ -23,8 +23,10 @@
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
 
-//Global variable declaration (Not optimal!)
+// Debug variables
 
+
+//Global variable declaration (Not optimal!)
 //visible markers
 std::list<int> visible_markers;  //visible markers(id)
 bool visible_projector=false;	//keeps track of when projector is visible
@@ -171,13 +173,13 @@ int main(int argc, char **argv)
 
 					//printing 2 corner points
 					ROS_INFO("--------------------------------------");
-					ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
+					/*ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
 					ROS_INFO("ptoplefty: [%f]", from3dTo2d(pTopLeft).y());
 					ROS_INFO("ptopleftz: [%f]", from3dTo2d(pTopLeft).z());
 
 					ROS_INFO("pbottomrightx: [%f]", from3dTo2d(pBottomRight).x());
 					ROS_INFO("pbottomrighty: [%f]", from3dTo2d(pBottomRight).y());
-					ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());
+					ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());*/
 
 					//stuff for the publisher
 					tr_marker.id=i;
@@ -228,13 +230,13 @@ int main(int argc, char **argv)
 
 					//printing 2 corner points
 					ROS_INFO("--------------------------------------");
-					ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
+					/*ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
 					ROS_INFO("ptoplefty: [%f]", from3dTo2d(pTopLeft).y());
 					ROS_INFO("ptopleftz: [%f]", from3dTo2d(pTopLeft).z());
 
 					ROS_INFO("pbottomrightx: [%f]", from3dTo2d(pBottomRight).x());
 					ROS_INFO("pbottomrighty: [%f]", from3dTo2d(pBottomRight).y());
-					ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());
+					ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());*/
 
 					//stuff for the publisher
 					tr_marker.id=i;

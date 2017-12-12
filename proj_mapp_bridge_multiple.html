@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!--<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script> -->
+
+<meta charset="utf-8">
+<script src="https://cdn.rawgit.com/konvajs/konva/1.7.6/konva.min.js"></script>
+<script src="roslibjs/build/roslib.js"></script>
+<script type="text/javascript" type="text/javascript">
+
+
+// This function connects to the rosbridge server running on the local computer on port 9090
+var rbServer = new ROSLIB.Ros({
+	url : 'ws://localhost:9090'
+});
+
+ // This function is called upon the rosbridge connection event
+ rbServer.on('connection', function() {
+	// Write appropriate message to #feedback div when successfully connected to rosbridge
+	var fbDiv = document.getElementById('feedback');
+	fbDiv.innerHTML += "<p>Connected to websocket server.</p>";
+});
+
+// This function is called when there is an error attempting to connect to rosbridge
+rbServer.on('error', function(error) {
+	// Write appropriate message to #feedback div upon error when attempting to connect to rosbridge
+	var fbDiv = document.getElementById('feedback');
+	fbDiv.innerHTML += "<p>Error connecting to websocket server.</p>";
+});
+
+// This function is called when the connection to rosbridge is closed
+rbServer.on('close', function() {
+	// Write appropriate message to #feedback div upon closing connection to rosbridge
+	var fbDiv = document.getElementById('feedback');
+	fbDiv.innerHTML += "<p>Connection to websocket server closed.</p>";
+ });
+
+//Define array to hold the data from ar_projection message
+var p=[];
+var counter=0;
+
+//Define listener, listening to ar_projection
+var listener = new ROSLIB.Topic({
+	ros : rbServer,
+	name : '/ar_projection',	
+	//messageType : 'projection_mapping/Transformed_marker'
+	messageType : 'projection_mapping/Ar_projection'
+});
+
+listener.subscribe(function(message) {
+
+	counter=counter+1;
+
+	if(message.markers.length>0){
+	//Printing the marker id and position from the recieved message
+		//console.log('Number of markers seen' + message.markers.length);
+		//console.log('p1: ' +'     x: ' +message.markers[0].p1.X+ '    y: ' + message.markers[0].p1.Y);
+		//console.log('p2: ' +'     x: ' +message.markers[0].p2.X+ '    y: ' + message.markers[0].p2.Y);
+		//console.log('p3: ' +'     x: ' +message.markers[0].p3.X+ '    y: ' + message.markers[0].p3.Y);
+		//console.log('p4: ' +'     x: ' +message.markers[0].p4.X+ '    y: ' + message.markers[0].p4.Y);
+	}
+	//Assigning message to global list p for animation
+
+	//set width and heigt to size of current window(in the browser)
+	var width = window.innerWidth;
+	var height = window.innerHeight;
+	p=[];
+	message.markers.forEach(function(element) {
+		var temp=[];
+		temp.push(element.id.toString());
+		temp.push(width*(element.p1.X+0.5));
+		temp.push(height*(element.p1.Y+0.5));
+		temp.push(width*(element.p2.X+0.5));
+		temp.push(height*(element.p2.Y+0.5));
+		temp.push(width*(element.p3.X+0.5));
+		temp.push(height*(element.p3.Y+0.5));
+		temp.push(width*(element.p4.X+0.5));
+		temp.push(height*(element.p4.Y+0.5));
+
+		p.push(temp);
+		
+	});
+});
+
+
+</script>
+</head>
+
+<body bgcolor="black">
+<div id="feedback"></div> 
+<div id="container"></div>
+<script>
+
+	//set width and heigt to size of current window(in the browser)
+	var width = window.innerWidth;
+	var height = window.innerHeight;
+
+	//define stage
+	var stage = new Konva.Stage({
+		container: 'container',
+		width: width,
+		height: height
+	});
+
+	//define konva layer
+	var layer = new Konva.Layer();
+
+	var polygons = {};
+
+	stage.add(layer);
+	var anim = new Konva.Animation(function() {
+		//console.time('someFunction');
+
+		if(counter>5){
+			counter=0;
+			layer.destroyChildren();
+			polygons={};
+		}
+		//Poly is updated with the latest info from the camera
+		//if it is the cube, paint it red else blue
+		p.forEach(function(element){
+			if(!(element[0] in polygons)){
+				//Initialize poly
+				var poly = new Konva.Line({
+					points: [0,0,0,0,0,0,0,0],	
+					fill: '#00D2FF',
+					stroke: 'black',
+					strokeWidth: 5,
+					closed : true
+				});
+				polygons[element[0]]=poly;
+				//Add to layer and stage
+				layer.add(poly);
+			}
+			
+			
+		});
+		
+		//modify all objects
+		var i;
+		for(i=0;i<p.length;i++){
+			/*if(p[i][0]==9) {
+				polygon[p[i][0]].setFill('#ff0000');
+			}else{
+				polygon[p[i][0]].setFill('#00D2FF');
+			}*/
+			var test=p[i][0];
+			polygons[p[i][0]].setPoints([p[i][1], p[i][2], p[i][3], p[i][4], p[i][5], p[i][6], p[i][7], p[i][8]]);
+		}
+		//console.timeEnd('someFunction'); 2ms
+	}, layer);
+
+	anim.start();
+</script> 
+</body>
+</html>

@@ -29,7 +29,7 @@
         <!-- the transformation node -->
 	<node pkg="projection_mapping" type="transformation" name="mapping_node" output="screen"/>
 
-	
+
 	
 
 </launch>

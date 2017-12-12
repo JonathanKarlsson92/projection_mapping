@@ -43,6 +43,7 @@ var listener = new ROSLIB.Topic({
 	ros : rbServer,
 	name : '/ar_projection',	
 	messageType : 'projection_mapping/Transformed_marker'
+	//messageType : 'projection_mapping/Ar_projection'
 });
 
 listener.subscribe(function(message) {
@@ -100,7 +101,13 @@ listener.subscribe(function(message) {
 	stage.add(layer);
 	var anim = new Konva.Animation(function() {
 		//Poly is updated with the latest info from the camera
-		poly.setPoints([p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]]); //also working
+		//if it is the cube, paint it red else blue
+		if(p[0]==9) {
+			poly.setFill('#ff0000');
+		}else{
+			poly.setFill('#00D2FF');
+		}
+		poly.setPoints([p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]]);
 	}, layer);
 
 	anim.start();

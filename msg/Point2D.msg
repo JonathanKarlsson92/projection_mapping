@@ -1,2 +1,2 @@
-int32 X
-int32 Y
+float32 X
+float32 Y

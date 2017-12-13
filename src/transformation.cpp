@@ -15,8 +15,8 @@
 #include <tf/transform_broadcaster.h>
 
 // parameters that have to be set for the projector that is used
-#define view_angle_x 3.14/4
-#define view_angle_y 3.14/6
+#define view_angle_x 2*0.3410*0.85
+#define view_angle_y 2*0.1974*0.9
 //#define resolution_x 1920 //Moved to html file
 //#define resolution_y 1080 //Moved to html file
 /**
@@ -31,31 +31,24 @@
 std::list<int> visible_markers;  //visible markers(id)
 bool visible_projector=false;	//keeps track of when projector is visible
 
-class visibleMarker{
-	public:
-		visibleMarker(ros::NodeHandle&); //  n
-		int markerID;
-	private:
-		double sampleMethod(); //declaration of a private example method
-		float ar_pos_x,ar_pos_y,ar_pos_z;
-			
-};
-
-
 
 // callback method for what to do with every message recieved
 void ar_callback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 {
         try
 	{
+		//clear and update the visiblility list and projector boolean
 		visible_markers.clear();
 		visible_projector=false;
 		if(!msg->markers.empty()){
 			//ROS_INFO("[%i]", msg->markers.size());
 			std::cout <<"Number of cubes: "<< msg->markers.size()<<'\n';
 			for(int i=0; i<	msg->markers.size(); i++){
+				//if marker not projector, add to list of visible else set bool to true
 				if(msg->markers[i].id!=0){
-					visible_markers.push_back(msg->markers[i].id);
+					if(msg->markers[i].id<10){
+						visible_markers.push_back(msg->markers[i].id);
+					}
 				}else{
 					visible_projector=true;
 				}
@@ -78,6 +71,8 @@ tf::Vector3 from3dTo2d(tf::Vector3 corner)
 	//offset in calibration
 	float offset_x=0;
 	float offset_y=0;
+	float angle_x=0;
+	float angle_y=0;
 	//position in x
 	float proj_const_x=1/std::tan(view_angle_x);		
 	Point2d.setX(proj_const_x*(corner.x()+offset_x)/corner.z());
@@ -95,6 +90,7 @@ std::string marker_string(int id){
 	return "/ar_marker_"+std::to_string(id);		
 }
 
+//main where the most stuff is updated
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "mapping_node");
@@ -131,14 +127,16 @@ int main(int argc, char **argv)
 	tf::Vector3 marker_2D_p3;
 	tf::Vector3 marker_2D_p4;
 
-	//Loop rate
-	ros::Rate loop_rate(10);
+	//Loop rate(change to higher(faster) or lower(slower) publishing speed)
+	ros::Rate loop_rate(40);
 
-	const float AR_WIDTH =0.055; //size of ar-cube
+	const float AR_WIDTH =0.04; //size of ar-cube
+	//const float AR_WIDTH =0.05; //for just projecting the edges of a cube
 
 	//Add projector lens relative to camera in tf
-	transform.setOrigin( tf::Vector3(0.055, -0.04, -0.11) ); //Translation to projector lens	
-	transform.setRotation(tf::createQuaternionFromRPY(-3.1415/2,0,3.1415));	//Rotation of coordinate system
+	transform.setOrigin( tf::Vector3(0.12, 0.06, 0) ); //Translation to projector lens	
+	transform.setRotation(tf::createQuaternionFromRPY(-3.1415/2+0.1974,0,3.1415));	//Rotation of coordinate system , + agnle to middle
+	//transform.setRotation(tf::createQuaternionFromRPY(0,0,0));
 	while (ros::ok())
   	{
 		try{
@@ -148,7 +146,7 @@ int main(int argc, char **argv)
 			//check from projector
 			if(visible_projector==true){
 				//broadcast lens position to tf
-				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "camera_depth_optical_frame", "projector_lens"));	//has to be measured
+				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "ar_marker_0", "projector_lens"));	//has to be measured
 				//iterate over all visible markers(i.e id)
 				for(int i:visible_markers){
 					//look in tf
@@ -173,13 +171,13 @@ int main(int argc, char **argv)
 
 					//printing 2 corner points
 					ROS_INFO("--------------------------------------");
-					/*ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
+					ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
 					ROS_INFO("ptoplefty: [%f]", from3dTo2d(pTopLeft).y());
 					ROS_INFO("ptopleftz: [%f]", from3dTo2d(pTopLeft).z());
 
 					ROS_INFO("pbottomrightx: [%f]", from3dTo2d(pBottomRight).x());
 					ROS_INFO("pbottomrighty: [%f]", from3dTo2d(pBottomRight).y());
-					ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());*/
+					ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());
 
 					//stuff for the publisher
 					tr_marker.id=i;
@@ -207,7 +205,7 @@ int main(int argc, char **argv)
 			else{ //check from camera
 				std::cout <<"Error, projector not seen by the camera, make sure that nothing is in the way or change the lightning conditions"<<'\n';
 				//iterate over all visible markers(i.e id)
-				for(int i:visible_markers){
+				/*for(int i:visible_markers){
 					//look in tf
 					listener.waitForTransform( "/camera_depth_optical_frame",marker_string(i), now, ros::Duration(1));
 					listener.lookupTransform( "/camera_depth_optical_frame",marker_string(i),  now, projector_to_ar_marker);
@@ -230,15 +228,15 @@ int main(int argc, char **argv)
 
 					//printing 2 corner points
 					ROS_INFO("--------------------------------------");
-					/*ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
+					ROS_INFO("ptopleftx: [%f]", from3dTo2d(pTopLeft).x());
 					ROS_INFO("ptoplefty: [%f]", from3dTo2d(pTopLeft).y());
 					ROS_INFO("ptopleftz: [%f]", from3dTo2d(pTopLeft).z());
 
 					ROS_INFO("pbottomrightx: [%f]", from3dTo2d(pBottomRight).x());
 					ROS_INFO("pbottomrighty: [%f]", from3dTo2d(pBottomRight).y());
-					ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());*/
+					ROS_INFO("pbottomrightz: [%f]", from3dTo2d(pBottomRight).z());
 
-					//stuff for the publisher
+					//Filling the publisher with the a message
 					tr_marker.id=i;
 					tr_marker.p1.X=marker_2D_p1.x();
 					tr_marker.p1.Y=marker_2D_p1.y();
@@ -255,12 +253,13 @@ int main(int argc, char **argv)
 					//publish corner and id
 					msg.markers.push_back(tr_marker);
 					
-				}
+				
 				//publish list of all seen markers
 				ar_publisher.publish(msg);
 				//clear list for next iteration			
 				msg.markers.clear();
 				//END TEST
+				*/
 			}
 		}
 		catch (tf::TransformException ex)

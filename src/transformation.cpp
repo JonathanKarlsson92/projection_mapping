@@ -26,11 +26,13 @@
 // Debug variables
 
 
-//Global variable declaration (Not optimal!)
+//Global variable declaration 
 //visible markers
 std::list<int> visible_markers;  //visible markers(id)
 bool visible_projector=false;	//keeps track of when projector is visible
 
+//assumes one cube
+std::list<tf::StampedTransform> past_poses(5);
 
 // callback method for what to do with every message recieved
 void ar_callback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
@@ -62,7 +64,23 @@ void ar_callback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr&msg)
 		ros::Duration(1.0).sleep();
 	}
 }
-
+// Lowpass filter
+//takes pose and updates global list of poses
+tf::StampedTransform lowPassFilter(tf::StampedTransform current_pose){
+	tf::StampedTransform mean_pose;	
+	mean_pose.setOrigin( tf::Vector3(0, 0, 0) ); //Translation to projector lens	
+	mean_pose.setRotation(tf::createQuaternionFromRPY(0,0,0));	//Rotation of coordinate system , + angle to middle
+	int len=past_poses.size();
+	float w1=0.7;
+	float w2=0.3;
+	for(int i=0; i<len;i++){
+		//mean_pose.setOrigin((w1*mean_pose.getOrigin()+w2*past_poses[i].getOrigin()));		
+		//mean_pose.setOrigin(mean_pose.getOrigin()+0.5*past_poses[i].getOrigin());
+		//mean_pose.setRotation(mean_pose.getRotation()+0.5*past_poses[i].getRotation());
+	}
+	
+	
+}
 //mapping from 3D to 2D
 tf::Vector3 from3dTo2d(tf::Vector3 corner)
 {
@@ -96,11 +114,11 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "mapping_node");
 	ros::NodeHandle n;
 	//publisher
-	ros::Publisher ar_publisher=n.advertise<projection_mapping::Ar_projection>("ar_projection",1000); 
+	ros::Publisher ar_publisher=n.advertise<projection_mapping::Ar_projection>("ar_projection",10); 
 	projection_mapping::Transformed_marker tr_marker;
 	projection_mapping::Ar_projection msg;
 
-	ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 1, ar_callback);
+	ros::Subscriber ar_pose = n.subscribe("ar_pose_marker", 10, ar_callback);
 	// Adding projector to tree
 	tf::TransformBroadcaster br;
   	tf::Transform transform;
@@ -128,14 +146,15 @@ int main(int argc, char **argv)
 	tf::Vector3 marker_2D_p4;
 
 	//Loop rate(change to higher(faster) or lower(slower) publishing speed)
-	ros::Rate loop_rate(40);
+	ros::Rate loop_rate(10);
 
-	const float AR_WIDTH =0.04; //size of ar-cube
+	const float AR_WIDTH =0.045; //size of ar-cube
+	const float proj_angle_y=0.1974*1.2; //Angle of projector y
 	//const float AR_WIDTH =0.05; //for just projecting the edges of a cube
 
 	//Add projector lens relative to camera in tf
 	transform.setOrigin( tf::Vector3(0.12, 0.06, 0) ); //Translation to projector lens	
-	transform.setRotation(tf::createQuaternionFromRPY(-3.1415/2+0.1974,0,3.1415));	//Rotation of coordinate system , + agnle to middle
+	transform.setRotation(tf::createQuaternionFromRPY(-3.1415/2+proj_angle_y,0,3.1415));	//Rotation of coordinate system , + angle to middle
 	//transform.setRotation(tf::createQuaternionFromRPY(0,0,0));
 	while (ros::ok())
   	{

@@ -5,8 +5,36 @@
 <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script> -->
 
 <meta charset="utf-8">
+
 <script src="https://cdn.rawgit.com/konvajs/konva/1.7.6/konva.min.js"></script>
 <script src="roslibjs/build/roslib.js"></script>
+
+
+<style type="text/css">
+
+	body {
+		overflow:hidden;
+		
+		margin: 0px;
+	}
+	#container{
+
+		height: 1060px;
+		width: 1900px;
+		/*height: 100vh;
+		width: 100vh;*/
+		
+		
+		/*width: 100%;
+		height: 100%;*/
+		clear: both;
+		border-style: solid;
+		border-width: 10px 10px 10px 10px;
+		border-color: white;
+
+	}
+	</style>
+
 <script type="text/javascript" type="text/javascript">
 
 
@@ -19,26 +47,30 @@ var rbServer = new ROSLIB.Ros({
  rbServer.on('connection', function() {
 	// Write appropriate message to #feedback div when successfully connected to rosbridge
 	var fbDiv = document.getElementById('feedback');
-	fbDiv.innerHTML += "<p>Connected to websocket server.</p>";
+	//fbDiv.innerHTML += "<p>Connected to websocket server.</p>";
 });
 
 // This function is called when there is an error attempting to connect to rosbridge
 rbServer.on('error', function(error) {
 	// Write appropriate message to #feedback div upon error when attempting to connect to rosbridge
 	var fbDiv = document.getElementById('feedback');
-	fbDiv.innerHTML += "<p>Error connecting to websocket server.</p>";
+	//fbDiv.innerHTML += "<p>Error connecting to websocket server.</p>";
 });
 
 // This function is called when the connection to rosbridge is closed
 rbServer.on('close', function() {
 	// Write appropriate message to #feedback div upon closing connection to rosbridge
 	var fbDiv = document.getElementById('feedback');
-	fbDiv.innerHTML += "<p>Connection to websocket server closed.</p>";
+	//fbDiv.innerHTML += "<p>Connection to websocket server closed.</p>";
  });
 
 //Define array to hold the data from ar_projection message
 var p=[];
 var counter=0;
+//Set window to fullsize
+var res_x=1920-20; //minus border
+var res_y=1080-20;
+//window.resizeTo( res_x,res_y )
 
 //Define listener, listening to ar_projection
 var listener = new ROSLIB.Topic({
@@ -49,74 +81,110 @@ var listener = new ROSLIB.Topic({
 });
 
 listener.subscribe(function(message) {
-
+	
+	console.time('someFunction'); //2ms
 	counter=counter+1;
 
-	if(message.markers.length>0){
-	//Printing the marker id and position from the recieved message
-		//console.log('Number of markers seen' + message.markers.length);
-		//console.log('p1: ' +'     x: ' +message.markers[0].p1.X+ '    y: ' + message.markers[0].p1.Y);
-		//console.log('p2: ' +'     x: ' +message.markers[0].p2.X+ '    y: ' + message.markers[0].p2.Y);
-		//console.log('p3: ' +'     x: ' +message.markers[0].p3.X+ '    y: ' + message.markers[0].p3.Y);
-		//console.log('p4: ' +'     x: ' +message.markers[0].p4.X+ '    y: ' + message.markers[0].p4.Y);
-	}
-	//Assigning message to global list p for animation
-
-	//set width and heigt to size of current window(in the browser)
-	var width = window.innerWidth;
-	var height = window.innerHeight;
 	p=[];
 	message.markers.forEach(function(element) {
 		var temp=[];
 		temp.push(element.id.toString());
-		temp.push(width*(element.p1.X+0.5));
-		temp.push(height*(element.p1.Y+0.5));
-		temp.push(width*(element.p2.X+0.5));
-		temp.push(height*(element.p2.Y+0.5));
-		temp.push(width*(element.p3.X+0.5));
-		temp.push(height*(element.p3.Y+0.5));
-		temp.push(width*(element.p4.X+0.5));
-		temp.push(height*(element.p4.Y+0.5));
+		temp.push(res_x*(element.p1.X+0.5));
+		temp.push(res_y*(element.p1.Y+0.5));
+		temp.push(res_x*(element.p2.X+0.5));
+		temp.push(res_y*(element.p2.Y+0.5));
+		temp.push(res_x*(element.p3.X+0.5));
+		temp.push(res_y*(element.p3.Y+0.5));
+		temp.push(res_x*(element.p4.X+0.5));
+		temp.push(res_y*(element.p4.Y+0.5));
 
 		p.push(temp);
 		
 	});
+	console.timeEnd('someFunction');
 });
 
 
 </script>
+
 </head>
 
 <body bgcolor="black">
 <div id="feedback"></div> 
 <div id="container"></div>
+
 <script>
 
-	//set width and heigt to size of current window(in the browser)
-	var width = window.innerWidth;
-	var height = window.innerHeight;
 
 	//define stage
 	var stage = new Konva.Stage({
 		container: 'container',
-		width: width,
-		height: height
+		width: res_x,
+		height: res_y
 	});
 
 	//define konva layer
 	var layer = new Konva.Layer();
 
+	//define circle to show middle
+	var circle = new Konva.Circle({
+      x: stage.getWidth() / 2,
+      y: stage.getHeight() / 2,
+      radius: 10,
+	  fill: 'rgb(255, 255, 255)',
+      //stroke: 'black',
+      strokeWidth: 4
+    });
+    // add the shape to the layer
+    layer.add(circle)
+
+	//define box for projection area
+	/*var box = new Konva.Line({
+					points: [10,10,stage.getWidth()-10,10,stage.getWidth()-10,stage.getHeight()-10,10,stage.getHeight()-10],	
+					//fill: '#00D2FF',
+					stroke: 'rgb(255, 255, 255)',
+					strokeWidth: 20,
+					closed : true
+	});
+	layer.add(box);*/
+
 	var polygons = {};
 
 	stage.add(layer);
 	var anim = new Konva.Animation(function() {
-		//console.time('someFunction');
+	
 
-		//if more than 5 messages recieved, clean layer and list
-		if(counter>5){
+		//if more than 10 messages recieved, clean layer and list
+		if(counter>10){
+			//remove??
+			stage.setWidth(res_x);	//update window size
+			stage.setHeight(res_y); //100 set to remove offsets
+
 			counter=0;
-			layer.destroyChildren();
+			layer.destroyChildren(); //this removes all
 			polygons={};
+
+			//define circle to show middle
+			var circle = new Konva.Circle({
+			x: stage.getWidth() / 2,
+			y: stage.getHeight() / 2,
+			radius: 10,
+			fill: 'rgb(255, 255, 255)',
+			//stroke: 'black',
+			strokeWidth: 4
+			});
+			// add the shape to the layer
+			layer.add(circle)
+
+			//define box for projection area
+			/*var box = new Konva.Line({
+							points: [10,10,stage.getWidth()-10,10,stage.getWidth()-10,stage.getHeight()-10,10,stage.getHeight()-10],	
+							//fill: '#00D2FF',
+							stroke: 'rgb(255, 255, 255)',
+							strokeWidth: 20,
+							closed : true
+			});
+			layer.add(box);*/
 		}
 		//Poly is updated with the latest info from the camera
 		//if it is the cube(i.e not the projector), paint it
@@ -126,8 +194,8 @@ listener.subscribe(function(message) {
 				var poly = new Konva.Line({
 					points: [0,0,0,0,0,0,0,0],	
 					//fill: '#00D2FF',
-					stroke: 'red',
-					strokeWidth: 10,
+					stroke: 'rgb(0, 0, 255)',
+					strokeWidth: 20,
 					closed : true
 				});
 				polygons[element[0]]=poly;
@@ -141,18 +209,19 @@ listener.subscribe(function(message) {
 		//modify all objects
 		var i;
 		for(i=0;i<p.length;i++){
-			/*if(p[i][0]==9) {
-				polygon[p[i][0]].setFill('#ff0000');
+			if(p[i][0]==9) {
+				polygons[p[i][0]].setStroke('rgb(0, 255, 0)');
 			}else{
-				polygon[p[i][0]].setFill('#00D2FF');
-			}*/
+				polygons[p[i][0]].setStroke('rgb(0, 0, 255)');
+			}
 			var test=p[i][0];
 			polygons[p[i][0]].setPoints([p[i][1], p[i][2], p[i][3], p[i][4], p[i][5], p[i][6], p[i][7], p[i][8]]);
 		}
-		//console.timeEnd('someFunction'); 2ms
+		
 	}, layer);
 
 	anim.start();
 </script> 
+-->
 </body>
 </html>

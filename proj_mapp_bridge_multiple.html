@@ -30,7 +30,7 @@
 		clear: both;
 		border-style: solid;
 		border-width: 10px 10px 10px 10px;
-		border-color: white;
+		border-color: rgb(245, 3, 3);
 
 	}
 	</style>
@@ -82,9 +82,9 @@ var listener = new ROSLIB.Topic({
 
 listener.subscribe(function(message) {
 	
-	console.time('someFunction'); //2ms
+	
 	counter=counter+1;
-
+	console.timeEnd('someFunction');
 	p=[];
 	message.markers.forEach(function(element) {
 		var temp=[];
@@ -101,7 +101,9 @@ listener.subscribe(function(message) {
 		p.push(temp);
 		
 	});
-	console.timeEnd('someFunction');
+	console.log(counter);
+	console.time('someFunction'); 
+	
 });
 
 
@@ -125,6 +127,18 @@ listener.subscribe(function(message) {
 
 	//define konva layer
 	var layer = new Konva.Layer();
+	var layer_static = new Konva.Layer();
+
+	//Hexagon for animation test
+	var triangle = new Konva.RegularPolygon({
+        x: 30,
+        y: 30,
+        sides: 3,
+        radius: 20,
+        fill: 'red',
+        stroke: 'black',
+        strokeWidth: 4
+    });
 
 	//define circle to show middle
 	var circle = new Konva.Circle({
@@ -136,87 +150,93 @@ listener.subscribe(function(message) {
       strokeWidth: 4
     });
     // add the shape to the layer
-    layer.add(circle)
-
-	//define box for projection area
-	/*var box = new Konva.Line({
-					points: [10,10,stage.getWidth()-10,10,stage.getWidth()-10,stage.getHeight()-10,10,stage.getHeight()-10],	
-					//fill: '#00D2FF',
-					stroke: 'rgb(255, 255, 255)',
-					strokeWidth: 20,
-					closed : true
-	});
-	layer.add(box);*/
+    layer_static.add(circle);
+	layer.add(triangle);
 
 	var polygons = {};
 
 	stage.add(layer);
-	var anim = new Konva.Animation(function() {
+	stage.add(layer_static);
+	var anim = new Konva.Animation(function(frame) {
 	
-
 		//if more than 10 messages recieved, clean layer and list
-		if(counter>10){
+		if(counter>50){
 			//remove??
-			stage.setWidth(res_x);	//update window size
-			stage.setHeight(res_y); //100 set to remove offsets
+			//stage.setWidth(res_x);	//update window size
+			//stage.setHeight(res_y); //100 set to remove offsets
 
 			counter=0;
-			layer.destroyChildren(); //this removes all
+			layer.destroyChildren(); //this removes all					//add again!
+			layer.add(triangle);
 			polygons={};
-
-			//define circle to show middle
-			var circle = new Konva.Circle({
-			x: stage.getWidth() / 2,
-			y: stage.getHeight() / 2,
-			radius: 10,
-			fill: 'rgb(255, 255, 255)',
-			//stroke: 'black',
-			strokeWidth: 4
-			});
-			// add the shape to the layer
-			layer.add(circle)
-
-			//define box for projection area
-			/*var box = new Konva.Line({
-							points: [10,10,stage.getWidth()-10,10,stage.getWidth()-10,stage.getHeight()-10,10,stage.getHeight()-10],	
-							//fill: '#00D2FF',
-							stroke: 'rgb(255, 255, 255)',
-							strokeWidth: 20,
-							closed : true
-			});
-			layer.add(box);*/
 		}
 		//Poly is updated with the latest info from the camera
-		//if it is the cube(i.e not the projector), paint it
+		//if it is the cube(i.e not the projector), add and paint it
 		p.forEach(function(element){
 			if(!(element[0] in polygons)){
 				//Initialize poly
-				var poly = new Konva.Line({
+				switch(element[0]) {
+				//rectange
+				case '1':
+					var poly = new Konva.Line({
+						points: [0,0,0,0,0,0,0,0],	
+						//fill: 'rgb(0, 0, 100)',
+						stroke: 'rgb(255, 0, 0)',
+						strokeWidth: 10,
+						closed : true
+					});
+					break;
+				//arrow
+				case '2':
+					var poly = new Konva.Line({
+						points: [0,0,0,0,0,0,0,0],	
+						fill: 'rgb(0, 0, 100)',
+						stroke: 'rgb(0, 0, 0)',
+						strokeWidth: 50,
+						closed : true
+					});
+					break;
+				//cube
+				case '9':
+					var poly = new Konva.Line({
+						points: [0,0,0,0,0,0,0,0],	
+						fill: 'rgb(0, 0, 0)',
+						stroke: 'rgb(0, 255, 0)',
+						strokeWidth: 5,
+						closed : true
+					});
+					break;
+				//the rest
+				default:
+					var poly = new Konva.Line({
 					points: [0,0,0,0,0,0,0,0],	
-					//fill: '#00D2FF',
-					stroke: 'rgb(0, 0, 255)',
+					fill: 'rgb(0, 100, 100)',
+					stroke: 'rgb(0, 100, 100)',
 					strokeWidth: 20,
 					closed : true
-				});
+					});
+				}
 				polygons[element[0]]=poly;
-				//Add to layer and stage
 				layer.add(poly);
 			}
-			
-			
 		});
 		
-		//modify all objects
+		//modify all objects with new position
 		var i;
 		for(i=0;i<p.length;i++){
-			if(p[i][0]==9) {
-				polygons[p[i][0]].setStroke('rgb(0, 255, 0)');
+			//paint cube in green
+			/*if(p[i][0]==9) {
+				polygons[p[i][0]].setStroke('rgb(0, 50, 0)');
 			}else{
-				polygons[p[i][0]].setStroke('rgb(0, 0, 255)');
+				polygons[p[i][0]].setStroke('rgb(255, 0, 0)');
 			}
-			var test=p[i][0];
+			var test=p[i][0];*/
 			polygons[p[i][0]].setPoints([p[i][1], p[i][2], p[i][3], p[i][4], p[i][5], p[i][6], p[i][7], p[i][8]]);
 		}
+		//To check framerate
+		var angleDiff = frame.timeDiff * 90 / 1000;
+        triangle.rotate(angleDiff);
+
 		
 	}, layer);
 

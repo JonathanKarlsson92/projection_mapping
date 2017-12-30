@@ -17,9 +17,9 @@
 // parameters that have to be set for the projector that is used
 #define view_angle_x 2*0.3410*0.85
 #define view_angle_y 2*0.1974*0.9
-#define AR_WIDTH 0.1/2
-#define AR_WIDTH_SMALL 0.07/2 //Small markers
-#define proj_angle_y 0.1974*1.25 //tilting up in radians
+#define AR_WIDTH 0.100/2
+#define AR_WIDTH_SMALL 0.070/2 //Small markers
+#define proj_angle_y 0.1974*1.35 //tilting up in radians
 
 //offset in calibration
 #define offset_x 0
@@ -78,8 +78,8 @@ tf::StampedTransform lowPassFilter(tf::StampedTransform current_pose){
 	mean_pose.setOrigin( tf::Vector3(0, 0, 0) ); //Translation to projector lens	
 	mean_pose.setRotation(tf::createQuaternionFromRPY(0,0,0));	//Rotation of coordinate system , + angle to middle
 	int len=past_poses.size();
-	float w1=0.7;
-	float w2=0.3;
+	float w1=0.70;
+	float w2=0.30;
 	for(int i=0; i<len;i++){
 		//mean_pose.setOrigin((w1*mean_pose.getOrigin()+w2*past_poses[i].getOrigin()));		
 		//mean_pose.setOrigin(mean_pose.getOrigin()+0.5*past_poses[i].getOrigin());
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "mapping_node");
 	ros::NodeHandle n;
 	//publisher
-	ros::Publisher ar_publisher=n.advertise<projection_mapping::Ar_projection>("ar_projection",1000); 
+	ros::Publisher ar_publisher=n.advertise<projection_mapping::Ar_projection>("ar_projection",10); 
 	projection_mapping::Transformed_marker tr_marker;
 	projection_mapping::Ar_projection msg;
 
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 
 	//Add projector lens relative to camera in tf
 	transform.setOrigin( tf::Vector3(0.12, 0.06, 0) ); //Translation to projector lens	
-	transform.setRotation(tf::createQuaternionFromRPY(-3.1415/2+proj_angle_y,0,3.1415));	//Rotation of coordinate system , + angle to middle
+	transform.setRotation(tf::createQuaternionFromRPY(-3.1415/2+0.1974*1,0,3.1415));	//Rotation of coordinate system , + angle to middle
 
 	// border
 	float ar_1_border=0.01;
@@ -166,10 +166,11 @@ int main(int argc, char **argv)
 	float ar_1_yp=0.13-ar_1_border;
 	float ar_1_ym=0.07-ar_1_border;
 
-	float ar_2_xp=0.157;
-	float ar_2_xm=0.04;
-	float ar_2_yp=0.043;
-	float ar_2_ym=0.85;
+	//offset for special cub(code 2) for demo
+	//float ar_2_xp=0.157;
+	//float ar_2_xm=0.04;
+	//float ar_2_yp=0.043;
+	//float ar_2_ym=0.85;
 	//transform.setRotation(tf::createQuaternionFromRPY(0,0,0));
 	while (ros::ok())
   	{
@@ -195,7 +196,7 @@ int main(int argc, char **argv)
 					marker_orient_proj=projector_to_ar_marker.getRotation();
 
 					//get corners
-					//MINUS X RIGHT, MINUS Y DOWN
+					//MINUS X RIGHT, MINUS Y DOWN??
 					if(i==1){
 						ROS_INFO("----SPECIAL MARKER 1 DETECTED--------");
 						pTopLeft=marker_pos_proj+tf::quatRotate(marker_orient_proj, tf::Vector3(ar_1_xm,ar_1_yp,0));		
@@ -256,7 +257,7 @@ int main(int argc, char **argv)
 
 
 				//debug noise
-				listener.waitForTransform( "/camera_rgb_frame",marker_string(0), now, ros::Duration(1));
+				/*listener.waitForTransform( "/camera_rgb_frame",marker_string(0), now, ros::Duration(1));
 				listener.lookupTransform( "/camera_rgb_frame",marker_string(0),  now, transform_proj);
 				listener.waitForTransform( "/camera_rgb_frame",marker_string(9), now, ros::Duration(1));
 				listener.lookupTransform( "/camera_rgb_frame",marker_string(9),  now, transform_marker9);
@@ -267,6 +268,7 @@ int main(int argc, char **argv)
 				std::cout <<"noise y: "<< transform_proj.getRotation().y()-transform_marker9.getRotation().y()<<'\n';
 				std::cout <<"noise z: "<< transform_proj.getRotation().z()-transform_marker9.getRotation().z()<<'\n';
 				std::cout <<"noise w: "<< transform_proj.getRotation().w()-transform_marker9.getRotation().w()<<'\n';
+				*/
 				
 			}
 			else{ //check from camera

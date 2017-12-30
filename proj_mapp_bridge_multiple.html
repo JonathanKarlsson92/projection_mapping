@@ -70,13 +70,11 @@ var counter=0;
 //Set window to fullsize
 var res_x=1920-20; //minus border
 var res_y=1080-20;
-//window.resizeTo( res_x,res_y )
 
 //Define listener, listening to ar_projection
 var listener = new ROSLIB.Topic({
 	ros : rbServer,
 	name : '/ar_projection',	
-	//messageType : 'projection_mapping/Transformed_marker'
 	messageType : 'projection_mapping/Ar_projection'
 });
 
@@ -116,8 +114,6 @@ listener.subscribe(function(message) {
 <div id="container"></div>
 
 <script>
-
-
 	//define stage
 	var stage = new Konva.Stage({
 		container: 'container',
@@ -150,7 +146,7 @@ listener.subscribe(function(message) {
       strokeWidth: 4
     });
     // add the shape to the layer
-    layer_static.add(circle);
+    	layer_static.add(circle);
 	layer.add(triangle);
 
 	var polygons = {};
@@ -158,15 +154,11 @@ listener.subscribe(function(message) {
 	stage.add(layer);
 	stage.add(layer_static);
 	var anim = new Konva.Animation(function(frame) {
-	
-		//if more than 10 messages recieved, clean layer and list
-		if(counter>50){
-			//remove??
-			//stage.setWidth(res_x);	//update window size
-			//stage.setHeight(res_y); //100 set to remove offsets
 
+		//if more than x messages recieved, clean layer and list
+		if(counter>50){
 			counter=0;
-			layer.destroyChildren(); //this removes all					//add again!
+			layer.destroyChildren(); //this removes all				
 			layer.add(triangle);
 			polygons={};
 		}
@@ -190,7 +182,7 @@ listener.subscribe(function(message) {
 				case '2':
 					var poly = new Konva.Line({
 						points: [0,0,0,0,0,0,0,0],	
-						fill: 'rgb(0, 0, 100)',
+						fill: 'rgb(0, 0, 255)',
 						stroke: 'rgb(0, 0, 0)',
 						strokeWidth: 50,
 						closed : true
@@ -210,7 +202,7 @@ listener.subscribe(function(message) {
 				default:
 					var poly = new Konva.Line({
 					points: [0,0,0,0,0,0,0,0],	
-					fill: 'rgb(0, 100, 100)',
+					//fill: 'rgb(0, 100, 100)',
 					stroke: 'rgb(0, 100, 100)',
 					strokeWidth: 20,
 					closed : true
@@ -220,24 +212,18 @@ listener.subscribe(function(message) {
 				layer.add(poly);
 			}
 		});
-		
+	
 		//modify all objects with new position
 		var i;
 		for(i=0;i<p.length;i++){
-			//paint cube in green
-			/*if(p[i][0]==9) {
-				polygons[p[i][0]].setStroke('rgb(0, 50, 0)');
-			}else{
-				polygons[p[i][0]].setStroke('rgb(255, 0, 0)');
-			}
-			var test=p[i][0];*/
+			//set points for cubes
 			polygons[p[i][0]].setPoints([p[i][1], p[i][2], p[i][3], p[i][4], p[i][5], p[i][6], p[i][7], p[i][8]]);
 		}
-		//To check framerate
+		//Animation to check framerate
 		var angleDiff = frame.timeDiff * 90 / 1000;
-        triangle.rotate(angleDiff);
+		triangle.rotate(angleDiff);
 
-		
+	
 	}, layer);
 
 	anim.start();
